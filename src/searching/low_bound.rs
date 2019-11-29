@@ -56,7 +56,9 @@ mod tests {
     }
 
     #[test]
-    fn bigger() {
-        assert_eq!(4, low_bound(&5, &vec![1, 2, 3, 4]));
+    fn not_found() {
+        assert_eq!(0, low_bound(&0, &vec![1, 2, 3, 5, 8]));
+        assert_eq!(3, low_bound(&4, &vec![1, 2, 3, 5, 8]));
+        assert_eq!(5, low_bound(&9, &vec![1, 2, 3, 5, 8]));
     }
 }
