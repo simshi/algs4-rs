@@ -20,7 +20,7 @@ impl UnionFind {
     }
 
     pub fn find(&self, i: usize) -> Option<usize> {
-        if i > self.ids.capacity() {
+        if i >= self.ids.capacity() {
             None
         } else {
             Some(self._find(i))
@@ -28,19 +28,28 @@ impl UnionFind {
     }
 
     fn _find(&self, i: usize) -> usize {
-        let mut j = i;
-        while j != self.ids[j].parent {
-            j = self.ids[j].parent;
+        let mut i = i;
+        while i != self.ids[i].parent {
+            i = self.ids[i].parent;
         }
 
-        j
+        i
+    }
+
+    fn _find_mut(&mut self, i: usize) -> usize {
+        let mut i = i;
+        while i != self.ids[i].parent {
+            self.ids[i].parent = self.ids[self.ids[i].parent].parent; // path compression
+            i = self.ids[i].parent;
+        }
+
+        i
     }
 
     pub fn connected(&self, p: usize, q: usize) -> Option<bool> {
-        if p > self.ids.capacity() || q > self.ids.capacity() {
-            None
-        } else {
-            Some(self.find(p) == self.find(q))
+        match (self.find(p), self.find(q)) {
+            (Some(p_root), Some(q_root)) => Some(p_root == q_root),
+            _ => None,
         }
     }
 
@@ -49,8 +58,8 @@ impl UnionFind {
             return;
         }
 
-        let p_root = self._find(p);
-        let q_root = self._find(q);
+        let p_root = self._find_mut(p);
+        let q_root = self._find_mut(q);
         if p_root == q_root {
             return;
         }
@@ -60,7 +69,6 @@ impl UnionFind {
         } else if self.ids[p_root].rank > self.ids[q_root].rank {
             self.ids[q_root].parent = p_root;
         } else {
-            // path compression
             self.ids[p_root].parent = q_root;
             self.ids[q_root].rank += 1;
         }
@@ -76,6 +84,13 @@ mod tests {
     fn empty() {
         let uf = UnionFind::new(1);
         assert_eq!(1, uf.count());
+    }
+
+    #[test]
+    fn none() {
+        let uf = UnionFind::new(1);
+        assert_eq!(None, uf.find(1));
+        assert_eq!(None, uf.connected(1, 0));
     }
 
     #[test]
