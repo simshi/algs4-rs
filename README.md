@@ -1,6 +1,7 @@
-# Study Algorithm 4th edition
-## in Rust!
+# Learning Algorithm 4th edition
+## and a little bit of Rust!
 
 # List
-  - [x] Binary Searching
-  - [x] Uninon Find
+  - [ ] Graph
+  - [ ] Sorting
+  - [ ] Searching
