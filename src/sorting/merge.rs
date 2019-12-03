@@ -1,43 +1,44 @@
 use std::cmp::min;
-use std::iter::repeat;
+use std::mem;
 
 pub fn merge_sort<T>(arr: &mut [T])
 where
-    T: PartialOrd + Default + Copy,
+    T: PartialOrd + Default + Clone,
 {
     let n = arr.len();
-    let mut aux_vec: Vec<T> = repeat(T::default()).take(n).collect();
+    let mut aux_vec: Vec<T> = vec![T::default(); n];
     let aux = &mut aux_vec[..];
 
+    // bottom-up
     let mut width = 1;
     while width < n {
         for i in (0..n).step_by(width * 2) {
-            bottom_up_merge(arr, aux, i, min(i + width, n), min(i + width * 2, n));
+            merge(arr, aux, i, min(i + width, n), min(i + width * 2, n));
         }
-        arr.copy_from_slice(aux);
+        arr.swap_with_slice(aux);
 
         width *= 2;
     }
 }
 
-fn bottom_up_merge<T>(arr: &mut [T], aux: &mut [T], left: usize, right: usize, end: usize)
+fn merge<T>(arr: &mut [T], aux: &mut [T], left: usize, right: usize, end: usize)
 where
-    T: PartialOrd + Clone,
+    T: PartialOrd,
 {
     let mut i = left;
     let mut j = right;
     for k in left..end {
         if j >= end {
-            aux[k] = arr[i].clone();
+            mem::swap(&mut aux[k], &mut arr[i]);
             i += 1;
         } else if i >= right {
-            aux[k] = arr[j].clone();
+            mem::swap(&mut aux[k], &mut arr[j]);
             j += 1;
         } else if arr[i] < arr[j] {
-            aux[k] = arr[i].clone();
+            mem::swap(&mut aux[k], &mut arr[i]);
             i += 1;
         } else {
-            aux[k] = arr[j].clone();
+            mem::swap(&mut aux[k], &mut arr[j]);
             j += 1;
         }
     }
