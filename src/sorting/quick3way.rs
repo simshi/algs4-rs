@@ -1,0 +1,98 @@
+pub fn quick3way_sort<T>(arr: &mut [T])
+where
+    T: PartialOrd,
+{
+    let n = arr.len();
+    if n <= 1 {
+        return;
+    }
+
+    sort3way(arr, 0, n - 1);
+}
+
+fn sort3way<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) {
+    let mut lo = lo;
+    while lo < hi {
+        let (lt, gt) = partition3way(arr, lo, hi);
+        if lt > 0 {
+            sort3way(arr, lo, lt - 1);
+        }
+        // manually Tail-Recursion-Optimization
+        //sort3way(arr, gt + 1, hi);
+        lo = gt + 1;
+    }
+}
+
+fn partition3way<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> (usize, usize) {
+    // always use middle as pivot
+    let mid = lo + (hi - lo) / 2;
+    arr.swap(lo, mid);
+
+    let mut lt = lo;
+    let mut i = lo + 1;
+    let mut gt = hi;
+    while i <= gt {
+        if arr[i] < arr[lt] {
+            arr.swap(i, lt);
+            i += 1;
+            lt += 1;
+        } else if arr[i] > arr[lt] {
+            arr.swap(i, gt);
+            gt -= 1;
+        } else {
+            i += 1;
+        }
+    }
+
+    (lt, gt)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty() {
+        let mut arr: [i32; 0] = [];
+        quick3way_sort(&mut arr);
+    }
+
+    #[test]
+    fn already_sorted() {
+        let mut arr = [1, 2, 3];
+        quick3way_sort(&mut arr);
+        assert_eq!(1, arr[0]);
+        assert_eq!(2, arr[1]);
+        assert_eq!(3, arr[2]);
+    }
+
+    #[test]
+    fn two_elements() {
+        let mut arr = [3, 2];
+        quick3way_sort(&mut arr);
+        assert_eq!(2, arr[0]);
+        assert_eq!(3, arr[1]);
+    }
+
+    #[test]
+    fn several_elements() {
+        let mut arr = [3, 2, 5, 8, 1];
+        quick3way_sort(&mut arr);
+        assert_eq!(1, arr[0]);
+        assert_eq!(2, arr[1]);
+        assert_eq!(3, arr[2]);
+        assert_eq!(5, arr[3]);
+        assert_eq!(8, arr[4]);
+    }
+
+    #[test]
+    fn with_equal_keys() {
+        let mut arr = [3, 2, 1, 2, 1];
+        quick3way_sort(&mut arr);
+        assert_eq!(1, arr[0]);
+        assert_eq!(1, arr[1]);
+        assert_eq!(2, arr[2]);
+        assert_eq!(2, arr[3]);
+        assert_eq!(3, arr[4]);
+    }
+}

@@ -27,3 +27,12 @@
     5 0
     ```
 
+## Quick Sort
+> Quicksort is a divide-and-conquer method for sorting. It works by partitioning an array into two parts, then sorting the parts independently.
+
+[Wiki with animation](https://en.wikipedia.org/wiki/Quicksort)
+
+### optimization
+- select pivot by median-of-three
+- tail recursion optimization
+- 3-way comparison
