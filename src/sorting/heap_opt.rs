@@ -9,12 +9,8 @@ where
 
     // construct heap, by building subheaps bottom-up
     // use zero-based heap index, k is root of subheap
-    let mut k = (n - 1) / 2;
-    while {
+    for k in (0..=(n - 1) / 2).rev() {
         sink(arr, k, n);
-        k > 0
-    } {
-        k -= 1;
     }
 
     while n > 0 {
