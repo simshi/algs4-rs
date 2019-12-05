@@ -24,9 +24,17 @@ fn sort3way<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) {
 }
 
 fn partition3way<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> (usize, usize) {
-    // always use middle as pivot
+    // select pivot by median-of-three
     let mid = lo + (hi - lo) / 2;
-    arr.swap(lo, mid);
+    if arr[lo] > arr[hi] {
+        arr.swap(lo, hi);
+    } // lo <= hi
+    if arr[mid] > arr[hi] {
+        arr.swap(mid, hi);
+    } // mid <= hi, lo <= hi
+    if arr[lo] < arr[mid] {
+        arr.swap(lo, mid);
+    } // mid <= lo <= hi
 
     let mut lt = lo;
     let mut i = lo + 1;

@@ -53,7 +53,7 @@ impl<T: PartialOrd + Default + Clone> MaxPQ<T> {
     }
 
     fn less(&self, i: usize, j: usize) -> bool {
-        return self.pq[i] < self.pq[j];
+        self.pq[i] < self.pq[j]
     }
 }
 
