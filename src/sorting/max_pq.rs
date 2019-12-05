@@ -4,10 +4,10 @@ pub struct MaxPQ<T> {
     n: usize,
 }
 
-impl<T: PartialOrd + Default + Clone> MaxPQ<T> {
+impl<T: PartialOrd> MaxPQ<T> {
     pub fn new() -> Self {
         MaxPQ {
-            pq: vec![T::default(); 1],
+            pq: Vec::new(),
             n: 0,
         }
     }
@@ -19,7 +19,7 @@ impl<T: PartialOrd + Default + Clone> MaxPQ<T> {
     pub fn pop(&mut self) -> Option<T> {
         if self.n > 0 {
             self.n -= 1;
-            (Some(self.pq.swap_remove(1)), self.sink(1)).0
+            (Some(self.pq.swap_remove(0)), self.sink(0)).0
         } else {
             None
         }
@@ -28,13 +28,13 @@ impl<T: PartialOrd + Default + Clone> MaxPQ<T> {
     pub fn push(&mut self, e: T) {
         self.pq.push(e);
         self.n += 1;
-        self.swim(self.n);
+        self.swim(self.n - 1);
     }
 
     fn sink(&mut self, mut i: usize) {
-        while 2 * i < self.n {
-            let mut j = 2 * i;
-            if j + 1 <= self.n && self.less(j, j + 1) {
+        while 2 * i + 1 < self.n {
+            let mut j = 2 * i + 1;
+            if j + 1 < self.n && self.less(j, j + 1) {
                 j += 1;
             }
             // caution: !less() means >= not >
@@ -47,9 +47,9 @@ impl<T: PartialOrd + Default + Clone> MaxPQ<T> {
         }
     }
     fn swim(&mut self, mut i: usize) {
-        while i > 1 && self.less(i / 2, i) {
-            self.pq.swap(i / 2, i);
-            i /= 2;
+        while i > 0 && self.less((i - 1) / 2, i) {
+            self.pq.swap((i - 1) / 2, i);
+            i = (i - 1) / 2;
         }
     }
 
