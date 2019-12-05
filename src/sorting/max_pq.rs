@@ -1,3 +1,4 @@
+#[derive(Default)]
 pub struct MaxPQ<T> {
     pq: Vec<T>,
     n: usize,

@@ -8,7 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut iter = stdin.lock().lines();
     let n = iter
         .next()
-        .unwrap_or(Err(io::Error::new(io::ErrorKind::Other, "No line")))?
+        .unwrap_or_else(|| Err(io::Error::new(io::ErrorKind::Other, "No line")))?
         .parse::<usize>()?;
 
     let mut uf = UnionFind::new(n);

@@ -27,18 +27,18 @@ where
 {
     let mut i = left;
     let mut j = right;
-    for k in left..end {
+    for item in aux.iter_mut().take(end).skip(left) {
         if j >= end {
-            mem::swap(&mut aux[k], &mut arr[i]);
+            mem::swap(item, &mut arr[i]);
             i += 1;
         } else if i >= right {
-            mem::swap(&mut aux[k], &mut arr[j]);
+            mem::swap(item, &mut arr[j]);
             j += 1;
         } else if arr[i] < arr[j] {
-            mem::swap(&mut aux[k], &mut arr[i]);
+            mem::swap(item, &mut arr[i]);
             i += 1;
         } else {
-            mem::swap(&mut aux[k], &mut arr[j]);
+            mem::swap(item, &mut arr[j]);
             j += 1;
         }
     }
@@ -47,6 +47,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sorting::is_sorted;
+    use rand::{thread_rng, Rng};
 
     #[test]
     fn empty() {
@@ -80,5 +82,12 @@ mod tests {
         assert_eq!(3, arr[2]);
         assert_eq!(5, arr[3]);
         assert_eq!(8, arr[4]);
+    }
+
+    #[test]
+    fn random_100() {
+        let mut arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
+        merge_sort(&mut arr);
+        assert!(is_sorted(&arr));
     }
 }
