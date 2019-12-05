@@ -36,3 +36,12 @@
 - select pivot by median-of-three
 - tail recursion optimization
 - 3-way comparison
+
+## Heap Sort
+> The Heapsort algorithm involves preparing the list by first turning it into a max heap. The algorithm then repeatedly swaps the first value of the list with the last value, decreasing the range of values considered in the heap operation by one, and sifting the new first value into its position in the heap. This repeats until the range of considered values is one value in length.
+
+[Wiki with animation](https://en.wikipedia.org/wiki/Heapsort)
+
+### optimization
+- Floyd's heap construction: building subheaps backwards.
+- Bounce heuristic: in second phase, exchange a[0] with a[end], while a[end] is one of the smallest elements, comparison with siblings is ineffient, can't get 50-50 probability, so use fast sink by comparing only two siblings.

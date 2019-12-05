@@ -50,6 +50,8 @@ fn partition3way<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> (usize, 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sorting::is_sorted;
+    use rand::{thread_rng, Rng};
 
     #[test]
     fn empty() {
@@ -94,5 +96,12 @@ mod tests {
         assert_eq!(2, arr[2]);
         assert_eq!(2, arr[3]);
         assert_eq!(3, arr[4]);
+    }
+
+    #[test]
+    fn random_100() {
+        let mut arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
+        quick3way_sort(&mut arr);
+        assert!(is_sorted(&arr));
     }
 }

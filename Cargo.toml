@@ -11,3 +11,4 @@ name = "union_find"
 path = "src/bin/union_find.rs"
 
 [dependencies]
+rand = "0.3"
