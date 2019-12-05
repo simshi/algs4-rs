@@ -1,24 +1,22 @@
 #[derive(Default)]
 pub struct MaxPQ<T> {
     pq: Vec<T>,
-    n: usize,
 }
 
 impl<T: PartialOrd> MaxPQ<T> {
     pub fn new() -> Self {
-        MaxPQ {
-            pq: Vec::new(),
-            n: 0,
-        }
+        MaxPQ { pq: Vec::new() }
     }
 
-    pub fn size(&self) -> usize {
-        self.n
+    pub fn len(&self) -> usize {
+        self.pq.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.pq.len() == 0
     }
 
     pub fn pop(&mut self) -> Option<T> {
-        if self.n > 0 {
-            self.n -= 1;
+        if !self.is_empty() {
             (Some(self.pq.swap_remove(0)), self.sink(0)).0
         } else {
             None
@@ -27,14 +25,13 @@ impl<T: PartialOrd> MaxPQ<T> {
 
     pub fn push(&mut self, e: T) {
         self.pq.push(e);
-        self.n += 1;
-        self.swim(self.n - 1);
+        self.swim(self.len() - 1);
     }
 
     fn sink(&mut self, mut i: usize) {
-        while 2 * i + 1 < self.n {
+        while 2 * i + 1 < self.len() {
             let mut j = 2 * i + 1;
-            if j + 1 < self.n && self.less(j, j + 1) {
+            if j + 1 < self.len() && self.less(j, j + 1) {
                 j += 1;
             }
             // caution: !less() means >= not >
@@ -65,7 +62,7 @@ mod tests {
     #[test]
     fn empty() {
         let mut pq = MaxPQ::<usize>::new();
-        assert_eq!(0, pq.size());
+        assert_eq!(0, pq.len());
         assert_eq!(None, pq.pop());
     }
 
@@ -73,7 +70,7 @@ mod tests {
     fn one() {
         let mut pq = MaxPQ::<usize>::new();
         pq.push(1);
-        assert_eq!(1, pq.size());
+        assert_eq!(1, pq.len());
         assert_eq!(Some(1), pq.pop());
         assert_eq!(None, pq.pop());
     }
@@ -82,7 +79,7 @@ mod tests {
     fn one_string() {
         let mut pq = MaxPQ::<&str>::new();
         pq.push("abc");
-        assert_eq!(1, pq.size());
+        assert_eq!(1, pq.len());
         assert_eq!(Some("abc"), pq.pop());
         assert_eq!(None, pq.pop());
     }
@@ -93,7 +90,7 @@ mod tests {
         pq.push(1);
         pq.push(-1);
         pq.push(2);
-        assert_eq!(3, pq.size());
+        assert_eq!(3, pq.len());
         assert_eq!(Some(2), pq.pop());
         assert_eq!(Some(1), pq.pop());
         assert_eq!(Some(-1), pq.pop());
