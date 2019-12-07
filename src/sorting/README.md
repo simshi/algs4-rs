@@ -114,5 +114,7 @@ drastical fast for sorted lists, fast for small
     - bounce heuristic helps a little bit only, worse on most-common schemas (**might require more investigations**)
     - worse than quick and merge, moving elements around(not in a cache-friendly way) too many times
 
-## TODO
-- Compare with C++ version
+## Compare with C++
+- same strategy (almost identical code, haha~~), use GCC with `-O2`
+- result is 621,123ns for 10k random u32 integers, vs 546,464ns in Rust, which is even better!
+- **go Rust boldly!**
