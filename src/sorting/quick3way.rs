@@ -11,16 +11,21 @@ where
 }
 
 fn sort3way<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) {
-    let mut lo = lo;
-    while lo < hi {
-        let (lt, gt) = partition3way(arr, lo, hi);
-        if lt > 0 {
-            sort3way(arr, lo, lt - 1);
-        }
-        // manually Tail-Recursion-Optimization
-        //sort3way(arr, gt + 1, hi);
-        lo = gt + 1;
+    if lo >= hi {
+        return;
     }
+
+    if lo + 15 > hi {
+        super::insertion_sort(&mut arr[lo..=hi]);
+        return;
+    }
+
+    let (lt, gt) = partition3way(arr, lo, hi);
+    if lt > 0 {
+        sort3way(arr, lo, lt - 1);
+    }
+
+    sort3way(arr, gt + 1, hi);
 }
 
 fn partition3way<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> (usize, usize) {

@@ -15,6 +15,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::sorting::is_sorted;
+    use rand::{thread_rng, Rng};
 
     #[test]
     fn empty() {
@@ -48,5 +50,12 @@ mod tests {
         assert_eq!(3, arr[2]);
         assert_eq!(5, arr[3]);
         assert_eq!(8, arr[4]);
+    }
+
+    #[test]
+    fn random_100() {
+        let mut arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
+        insertion_sort(&mut arr);
+        assert!(is_sorted(&arr));
     }
 }

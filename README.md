@@ -1,7 +1,12 @@
-# Learning Algorithm 4th edition
-## and a little bit of Rust!
+# Learning Algorithm 4th edition in Rust
+- Idiomatic Rust
+- Basic Algorithms
 
-# List
+## List
   - [ ] Graph
   - [ ] Sorting
   - [ ] Searching
+
+## Test && Benchmark
+ - `Cargo test sorting::`
+ - `Cargo +nightly bench`
