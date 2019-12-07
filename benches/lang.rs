@@ -17,7 +17,7 @@ fn lang_int_swap_by_copy(b: &mut Bencher) {
 }
 
 #[bench]
-fn lang_int_swap(b: &mut Bencher) {
+fn lang_int_swap_inplace(b: &mut Bencher) {
     b.iter(|| {
         let mut arr = [1u32, 2u32];
         black_box(arr.swap(0, 1))
@@ -40,7 +40,22 @@ fn lang_string_swap_by_copy(b: &mut Bencher) {
 }
 
 #[bench]
-fn lang_string_swap(b: &mut Bencher) {
+fn lang_string_swap_by_empty_temp(b: &mut Bencher) {
+    b.iter(|| {
+        let mut arr = [
+            String::from("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
+            String::from("0987654321ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
+        ];
+        // let temp = arr[0]; // cannot move here!
+        let mut temp = String::new();
+        std::mem::swap(&mut temp, &mut arr[0]);
+        black_box(arr.swap(0, 1));
+        std::mem::swap(&mut arr[1], &mut temp)
+    });
+}
+
+#[bench]
+fn lang_string_swap_inplace(b: &mut Bencher) {
     b.iter(|| {
         let mut arr = [
             String::from("0987654321ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
