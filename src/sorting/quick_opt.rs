@@ -1,6 +1,6 @@
 pub fn quick_sort_opt<T>(arr: &mut [T])
 where
-    T: PartialOrd,
+    T: Ord + Clone,
 {
     let n = arr.len();
     if n <= 1 {
@@ -10,7 +10,7 @@ where
     sort(arr, 0, n - 1);
 }
 
-fn sort<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) {
+fn sort<T: Ord + Clone>(arr: &mut [T], lo: usize, hi: usize) {
     if lo >= hi {
         return;
     }
@@ -26,7 +26,7 @@ fn sort<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) {
     //lo = p + 1;
 }
 
-fn partition<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> usize {
+fn partition<T: Ord + Clone>(arr: &mut [T], lo: usize, hi: usize) -> usize {
     // select pivot by median-of-three
     let mid = lo + (hi - lo) / 2;
     if arr[lo] > arr[hi] {
@@ -38,6 +38,7 @@ fn partition<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> usize {
     if arr[lo] > arr[mid] {
         arr.swap(lo, mid);
     } // lo <= mid <= hi
+    let pivot = arr[mid].clone();
 
     // Hoare partition schema
     let mut i = lo;
@@ -46,11 +47,11 @@ fn partition<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> usize {
         // do-while in Rust...
         while {
             i += 1;
-            arr[i - 1] < arr[mid]
+            arr[i - 1] < pivot
         } {}
         while {
             j -= 1;
-            arr[j] > arr[mid]
+            arr[j] > pivot
         } {}
 
         if i - 1 >= j {
@@ -67,6 +68,7 @@ fn partition<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> usize {
 mod tests {
     use super::*;
     use crate::sorting::is_sorted;
+    use rand::{thread_rng, Rng};
 
     #[test]
     fn empty() {
@@ -108,6 +110,13 @@ mod tests {
     #[test]
     fn all_identical() {
         let mut arr = [1, 1, 1, 1, 1];
+        quick_sort_opt(&mut arr);
+        assert!(is_sorted(&arr));
+    }
+
+    #[test]
+    fn random_100() {
+        let mut arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
         quick_sort_opt(&mut arr);
         assert!(is_sorted(&arr));
     }

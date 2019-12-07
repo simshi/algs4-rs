@@ -51,6 +51,7 @@ fn partition<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> usize {
 mod tests {
     use super::*;
     use crate::sorting::is_sorted;
+    use rand::{thread_rng, Rng};
 
     #[test]
     fn empty() {
@@ -100,6 +101,13 @@ mod tests {
     #[test]
     fn all_identical() {
         let mut arr = [1, 1, 1, 1, 1];
+        quick_sort(&mut arr);
+        assert!(is_sorted(&arr));
+    }
+
+    #[test]
+    fn random_100() {
+        let mut arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
         quick_sort(&mut arr);
         assert!(is_sorted(&arr));
     }
