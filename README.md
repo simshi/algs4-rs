@@ -2,11 +2,12 @@
 - Idiomatic Rust
 - Basic Algorithms
 
-## List
-  - [ ] Graph
+## Content
   - [ ] Sorting
   - [ ] Searching
+  - [ ] Graph
 
 ## Test && Benchmark
+ - `cargo run --release --bin union_find < data/largeUF.txt`
  - `Cargo test sorting::`
  - `Cargo +nightly bench`
