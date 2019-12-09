@@ -24,15 +24,14 @@ fn lang_int_swap_inplace(b: &mut Bencher) {
     });
 }
 
+const S1: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz1234567890";
+const S2: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz0987654321";
 // swap by temp is clone, which requires memory allocation, the cost can't be ignored
 // the good thing about Rust is it makes the clone/copy explicit
 #[bench]
 fn lang_string_swap_by_copy(b: &mut Bencher) {
     b.iter(|| {
-        let mut arr = [
-            String::from("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
-            String::from("0987654321ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
-        ];
+        let mut arr = [String::from(S1), String::from(S2)];
         let temp = arr[0].clone();
         black_box(arr[0] = arr[1].clone());
         arr[1] = temp
@@ -42,10 +41,7 @@ fn lang_string_swap_by_copy(b: &mut Bencher) {
 #[bench]
 fn lang_string_swap_by_empty_temp(b: &mut Bencher) {
     b.iter(|| {
-        let mut arr = [
-            String::from("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
-            String::from("0987654321ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
-        ];
+        let mut arr = [String::from(S1), String::from(S2)];
         // let temp = arr[0]; // cannot move here!
         let mut temp = String::new();
         std::mem::swap(&mut temp, &mut arr[0]);
@@ -57,10 +53,14 @@ fn lang_string_swap_by_empty_temp(b: &mut Bencher) {
 #[bench]
 fn lang_string_swap_inplace(b: &mut Bencher) {
     b.iter(|| {
-        let mut arr = [
-            String::from("0987654321ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
-            String::from("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz"),
-        ];
+        let mut arr = [String::from(S1), String::from(S2)];
         black_box(arr.swap(0, 1))
     });
+}
+
+#[bench]
+fn lang_string_comparision(b: &mut Bencher) {
+    let s1 = String::from(S1);
+    let s2 = String::from(S1);
+    b.iter(move || s1 == s2);
 }
