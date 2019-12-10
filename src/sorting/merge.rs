@@ -14,8 +14,8 @@ where
     while width < n {
         for i in (0..n).step_by(width * 2) {
             merge(arr, aux, i, min(i + width, n), min(i + width * 2, n));
-            arr.swap_with_slice(aux);
         }
+        arr.swap_with_slice(aux);
 
         width *= 2;
     }
