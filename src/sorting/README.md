@@ -32,7 +32,7 @@
 
 [Wiki with animation](https://en.wikipedia.org/wiki/Mergesort)
 
-### optimization
+### optimizations
 - allocate aux array once
 - interleaved use original array with aux array
 - switch to insertion sort while n is small
@@ -42,7 +42,7 @@
 
 [Wiki with animation](https://en.wikipedia.org/wiki/Quicksort)
 
-### optimization
+### optimizations
 - select pivot by median-of-three
 - Hoare partition schema
 - tail recursion optimization (unneccessary if complier evolves)
@@ -54,7 +54,7 @@
 
 [Wiki with animation](https://en.wikipedia.org/wiki/Heapsort)
 
-### optimization
+### optimizations
 - Floyd's heap construction: building subheaps backwards.
 - Bounce heuristic: in second phase, exchange a[0] with a[end], while a[end] is one of the smallest elements, comparison with siblings is ineffient, can't get 50-50 probability, so use fast sink by comparing only two siblings.
 - **Bounce performs worse on identical keys
@@ -62,6 +62,7 @@
 # Benchmark
 
 ## Methods
+0. builtin: [sort_unstable](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.sort_unstable) based on [pattern-defeating quicksort](https://github.com/orlp/pdqsort) is the fastest, 2x faster in the random 10k case, check below for the reason
 1. Insertion: naive implementation
 2. Shell: step(i+1) = step(i)/3
 3. Merge: naive
@@ -86,13 +87,13 @@ drastical fast for sorted lists, fast for small
 
 | **Type** | **Count** | **Schema** | Base | Insertion | Shell | Merge | Merge Opt | Quick | Quick 3way |Quick Optimized| Heap | Heap Optimized |
 |---|---:|---|---:|----:|---:|---:|---:|---:|---:|---:|---:|---:|
-| u32 | 7 | random | 18 | 33 | |161 |65 | 41 | 37 | 37 | 45 | 48 |
-| u32 | 15 | random | 18 | 74 |72| 346|135 | 75 | 80 | 77 | 105 | 111 |
-| u32 | 100 | random | 25 | 4907|790| 4039|1292 | 658 | 879 |626 | 1181 | 1081 |
-| u32 | 100 | identical | 0 | 128 |534| 3781|860 | 631 | 129 | 387 | 346 | 1094 |
-| u32 | 100 | sorted | 0 | 128 |635| 3763|883| 3380 | 1340 | 219 | 1361 | 1215 |
-| u32 | 1000 | reversed | 90 | 630984 |13266|182921|26542 | 270252 | 31359 | 5085 | 44467 | 45845 |
-| u32 | 10000 | random | 95 | 32247954 |840717|20426974|714673 | 551410 | 624298 | 546464 | 777537 | 799576 |
+| u32 | 7 | random | 18 | 33 | |129 |65 | 41 | 37 | 37 | 45 | 48 |
+| u32 | 15 | random | 18 | 74 |72|231|135 | 75 | 80 | 77 | 105 | 111 |
+| u32 | 100 | random | 25 | 4907|790|2066|1292 | 658 | 879 |626 | 1181 | 1081 |
+| u32 | 100 | identical | 0 | 128 |534|2002|860 | 631 | 129 | 387 | 346 | 1094 |
+| u32 | 100 | sorted | 0 | 128 |635| 2159|883| 3380 | 1340 | 219 | 1361 | 1215 |
+| u32 | 1000 | reversed | 90 | 630984 |13266|26706|22542 | 270252 | 31359 | 5085 | 44467 | 45845 |
+| u32 | 10000 | random | 95 | 32247954 |840717|796198|674673 | 551410 | 624298 | 546464 | 777537 | 799576 |
 
 > `Base` is time consumed by random-generating
 
@@ -113,6 +114,12 @@ drastical fast for sorted lists, fast for small
 4. Heap sort:
     - bounce heuristic helps a little bit only, worse on most-common schemas (**might require more investigations**)
     - worse than quick and merge, moving elements around(not in a cache-friendly way) too many times
+5. Builtin patten-defeating quicksort:
+    - adaptive to some patterns, run in linear time, e.g. sorted, reversed, equal elements.
+    - use insertion sort more if feasible: no swap in partitioning and partitions is decently balanced, aborts if more than a constant swaps performed.
+    - Tukey's ninther to select median-of-medians
+    - BlockQuicksort: bypass the branch predictor by using small buffers (entirely in L1 cache) of the indices of elements that need to be swapped
+    - detect worst case, shuffling some elements to break the "bad" pattern and try before jump to heap sort
 
 ## Compare with C++
 - same strategy (almost identical code, haha~~), use GCC with `-O2`

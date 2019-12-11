@@ -1,6 +1,6 @@
 # Learning Algorithm 4th edition in Rust
 - Idiomatic Rust
-- Basic Algorithms
+- [Algorithms, 4th Edition by Robert Sedgewick](https://algs4.cs.princeton.edu/)
 
 ## Content
   - [ ] Sorting

@@ -162,6 +162,15 @@ fn sort_int15_quick_opt(b: &mut Bencher) {
 }
 
 #[bench]
+fn sort_int15_builtin(b: &mut Bencher) {
+	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
+	b.iter(|| {
+		let mut arr = arr.clone();
+		black_box(arr.sort_unstable())
+	});
+}
+
+#[bench]
 fn sort_int15_heap(b: &mut Bencher) {
 	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
 	b.iter(|| {
@@ -247,6 +256,15 @@ fn sort_int100_quick_opt(b: &mut Bencher) {
 	b.iter(|| {
 		let mut arr = arr.clone();
 		black_box(quick_sort_opt(&mut arr))
+	});
+}
+
+#[bench]
+fn sort_int100_builtin(b: &mut Bencher) {
+	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
+	b.iter(|| {
+		let mut arr = arr.clone();
+		black_box(arr.sort_unstable())
 	});
 }
 
@@ -388,6 +406,18 @@ fn sort_int10k_heap_opt(b: &mut Bencher) {
 }
 
 #[bench]
+fn sort_int10k_builtin(b: &mut Bencher) {
+	let arr = thread_rng()
+		.gen_iter::<u32>()
+		.take(10000)
+		.collect::<Vec<_>>();
+	b.iter(|| {
+		let mut arr = arr.clone();
+		black_box(arr.sort_unstable())
+	});
+}
+
+#[bench]
 fn sort_int100_same_insertion(b: &mut Bencher) {
 	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
 	b.iter(|| black_box(insertion_sort(&mut arr)));
@@ -449,6 +479,12 @@ fn sort_int100_same_heap_opt(b: &mut Bencher) {
 }
 
 #[bench]
+fn sort_int100_same_builtin(b: &mut Bencher) {
+	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
+	b.iter(|| black_box(arr.sort_unstable()));
+}
+
+#[bench]
 fn sort_int100_sorted_insertion(b: &mut Bencher) {
 	let mut arr = (0..100).take(100).collect::<Vec<_>>();
 	b.iter(|| black_box(insertion_sort(&mut arr)));
@@ -500,6 +536,12 @@ fn sort_int100_sorted_heap(b: &mut Bencher) {
 fn sort_int100_sorted_heap_opt(b: &mut Bencher) {
 	let mut arr = (0..100).take(100).collect::<Vec<_>>();
 	b.iter(|| black_box(heap_sort_opt(&mut arr)));
+}
+
+#[bench]
+fn sort_int100_sorted_builtin(b: &mut Bencher) {
+	let mut arr = (0..100).take(100).collect::<Vec<_>>();
+	b.iter(|| black_box(arr.sort_unstable()));
 }
 
 #[bench]
@@ -588,5 +630,14 @@ fn sort_int1k_reversed_heap_opt(b: &mut Bencher) {
 	b.iter(|| {
 		let mut arr = arr.clone();
 		black_box(heap_sort_opt(&mut arr))
+	});
+}
+
+#[bench]
+fn sort_int1k_reversed_builtin(b: &mut Bencher) {
+	let arr = (0..1000).rev().collect::<Vec<_>>();
+	b.iter(|| {
+		let mut arr = arr.clone();
+		black_box(arr.sort_unstable())
 	});
 }
