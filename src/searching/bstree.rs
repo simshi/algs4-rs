@@ -84,20 +84,20 @@ impl<K: Ord, V> BSTree<K, V> {
         self._keys(&self.root, &mut q);
         q
     }
-    pub fn keys_range<'a>(&'a self, lo: &K, hi: &K) -> impl Iterator<Item = &K> + 'a {
+    pub fn keys_range<'a>(&'a self, lo: &K, hi: &K) -> Vec<&K> {
         let mut q: Vec<&K> = Vec::new();
         self._keys_range(&self.root, &mut q, lo, hi);
-        q.into_iter()
-    }
-    pub fn keys_iter<'a>(&'a self) -> Iter<'a, K, V> {
-        Iter {
-            stack: Vec::new(),
-            current: self.root.as_ref().map(|r| &**r),
-        }
+        q
     }
     pub fn into_iter(self) -> IntoIter<K, V> {
         // take self
         IntoIter(self)
+    }
+    pub fn iter<'a>(&'a self) -> Iter<'a, K, V> {
+        Iter {
+            stack: Vec::new(),
+            current: self.root.as_ref().map(|r| &**r),
+        }
     }
 
     pub fn check(&self) -> bool {
@@ -445,13 +445,13 @@ mod tests {
         }
         assert!(st.check());
 
-        let v = st.keys_range(&1, &3).collect::<Vec<_>>();
+        let v = st.keys_range(&1, &3);
+        assert_eq!([&1, &2, &3], v.as_slice());
+        let v = st.keys_range(&0, &3);
         assert_eq!([&1, &2, &3], &v[..]);
-        let v = st.keys_range(&0, &3).collect::<Vec<_>>();
-        assert_eq!([&1, &2, &3], &v[..]);
-        let v = st.keys_range(&8, &9).collect::<Vec<_>>();
+        let v = st.keys_range(&8, &9);
         assert_eq!([&8, &9], &v[..]);
-        let v = st.keys_range(&8, &20).collect::<Vec<_>>();
+        let v = st.keys_range(&8, &20);
         assert_eq!([&8, &9], &v[..]);
     }
 
@@ -462,7 +462,7 @@ mod tests {
             st.put(c.to_string(), 1);
         }
 
-        let mut it = st.keys_iter();
+        let mut it = st.iter();
         assert_eq!(Some((&"A".into(), &1)), it.next());
         assert_eq!(Some((&"C".into(), &1)), it.next());
         assert_eq!(Some((&"E".into(), &1)), it.next());
