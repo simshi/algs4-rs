@@ -84,7 +84,7 @@ impl<K: Ord, V> BSTree<K, V> {
         self._keys(&self.root, &mut q);
         q
     }
-    pub fn keys_range<'a>(&'a self, lo: &K, hi: &K) -> Vec<&K> {
+    pub fn keys_range(&self, lo: &K, hi: &K) -> Vec<&K> {
         let mut q: Vec<&K> = Vec::new();
         self._keys_range(&self.root, &mut q, lo, hi);
         q
@@ -119,48 +119,34 @@ impl<K: Ord, V> BSTree<K, V> {
     }
 
     fn _floor<'a>(&self, list: &'a List<K, V>, key: &K) -> Option<&'a K> {
-        list.as_ref().and_then(|p| {
-            if key < &p.key {
-                self._floor(&p.left, key)
-            } else if key > &p.key {
-                self._floor(&p.right, key).or(Some(&p.key))
-            } else {
-                Some(&p.key)
-            }
+        list.as_ref().and_then(|p| match key.cmp(&p.key) {
+            Ordering::Equal => Some(&p.key),
+            Ordering::Less => self._floor(&p.left, key),
+            Ordering::Greater => self._floor(&p.right, key).or(Some(&p.key)),
         })
     }
     fn _ceiling<'a>(&self, list: &'a List<K, V>, key: &K) -> Option<&'a K> {
-        list.as_ref().and_then(|p| {
-            if key < &p.key {
-                self._ceiling(&p.left, key).or(Some(&p.key))
-            } else if key > &p.key {
-                self._ceiling(&p.right, key)
-            } else {
-                Some(&p.key)
-            }
+        list.as_ref().and_then(|p| match key.cmp(&p.key) {
+            Ordering::Equal => Some(&p.key),
+            Ordering::Less => self._ceiling(&p.left, key).or(Some(&p.key)),
+            Ordering::Greater => self._ceiling(&p.right, key),
         })
     }
     fn _select<'a>(&self, list: &'a List<K, V>, i: usize) -> Option<&'a K> {
         list.as_ref().and_then(|b| {
             let ls = b.left.as_ref().map_or(0, |b| b.size);
-            if i < ls {
-                self._select(&b.left, i)
-            } else if i > ls {
-                self._select(&b.right, i - ls - 1)
-            } else {
-                Some(&b.key)
+            match i.cmp(&ls) {
+                Ordering::Equal => Some(&b.key),
+                Ordering::Less => self._select(&b.left, i),
+                Ordering::Greater => self._select(&b.right, i - ls - 1),
             }
         })
     }
     fn _rank(&self, list: &List<K, V>, key: &K) -> usize {
-        list.as_ref().map_or(0, |b| {
-            if key < &b.key {
-                self._rank(&b.left, key)
-            } else if key > &b.key {
-                self._rank(&b.left, key) + 1 + self._rank(&b.right, key)
-            } else {
-                b.left.as_ref().map_or(0, |b| b.size)
-            }
+        list.as_ref().map_or(0, |b| match key.cmp(&b.key) {
+            Ordering::Equal => b.left.as_ref().map_or(0, |b| b.size),
+            Ordering::Less => self._rank(&b.left, key),
+            Ordering::Greater => self._rank(&b.left, key) + 1 + self._rank(&b.right, key),
         })
     }
 
