@@ -62,7 +62,7 @@
 # Benchmark
 
 ## Methods
-0. builtin: [sort_unstable](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.sort_unstable) based on [pattern-defeating quicksort](https://github.com/orlp/pdqsort) is the fastest, 2x faster in the random 10k case, check below for the reason
+0. builtin: [sort_unstable](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.sort_unstable) based on [pattern-defeating quicksort](https://github.com/orlp/pdqsort) is the fastest, ~3.5x faster in the random 10k case, check below for the reason
 1. Insertion: naive implementation
 2. Shell: step(i+1) = step(i)/3
 3. Merge: naive
@@ -80,8 +80,6 @@
     - select pivot by median of three
 8. Heap: naive
 9. Heap optimized: Bounce heuristic
-
-drastical fast for sorted lists, fast for small
 
 ## Results
 
@@ -124,4 +122,5 @@ drastical fast for sorted lists, fast for small
 ## Compare with C++
 - same strategy (almost identical code, haha~~), use GCC with `-O2`
 - result is 621,123ns for 10k random u32 integers, vs 546,464ns in Rust, which is even better!
-- **go Rust boldly!**
+- `std::qsort` is at same level.
+- **Go Rust boldly!**
