@@ -13,7 +13,7 @@ pub struct BSTree<K, V> {
     root: List<K, V>,
 }
 
-impl<K: Eq + Ord, V> BSTree<K, V> {
+impl<K: Ord, V> BSTree<K, V> {
     pub fn new() -> Self {
         BSTree { root: None }
     }
@@ -31,8 +31,17 @@ impl<K: Eq + Ord, V> BSTree<K, V> {
     pub fn max(&self) -> Option<&K> {
         self.root.as_ref().map(|p| self._max(p))
     }
+    pub fn floor(&self, key: &K) -> Option<&K> {
+        self._floor(&self.root, key)
+    }
+    pub fn ceiling(&self, key: &K) -> Option<&K> {
+        self._ceiling(&self.root, key)
+    }
     pub fn select(&self, i: usize) -> Option<&K> {
-        self.root.as_ref().map(|p| &p.key)
+        self._select(&self.root, i)
+    }
+    pub fn rank(&self, key: &K) -> usize {
+        self._rank(&self.root, key)
     }
 
     pub fn get(&self, key: &K) -> Option<&V> {
@@ -44,40 +53,60 @@ impl<K: Eq + Ord, V> BSTree<K, V> {
     }
 
     pub fn contains(&self, key: &K) -> bool {
-        false
-    }
-    pub fn rank(&self, key: &K) -> usize {
-        0
+        self.get(key).is_some()
     }
 
-    pub fn floor(&self, key: &K) -> Option<&K> {
-        self.root.as_ref().map(|p| &p.key)
+    pub fn delete_min(&mut self) {
+        let r = self.root.take();
+        self.root = self._delete_min(r);
     }
-    pub fn ceiling(&self, key: &K) -> Option<&K> {
-        self.root.as_ref().map(|p| &p.key)
+    pub fn delete_max(&mut self) {
+        let r = self.root.take();
+        self.root = self._delete_max(r);
+    }
+    pub fn delete(&mut self, key: &K) {
+        let r = self.root.take();
+        self.root = self._delete(r, key);
+    }
+    pub fn pop_min(&mut self) -> Option<(K, V)> {
+        self.root
+            .take()
+            .and_then(|b| {
+                let (r, x) = self._pop_min(b);
+                self.root = r;
+                x.map(|b| (b.key, b.value))
+            })
+            .or(None)
     }
 
-    pub fn delete(&mut self, key: &K) {}
-    pub fn delete_min(&mut self) {}
-    pub fn delete_max(&mut self) {}
+    pub fn keys(&self) -> Vec<&K> {
+        let mut q: Vec<&K> = Vec::new();
+        self._keys(&self.root, &mut q);
+        q
+    }
+    pub fn keys_range<'a>(&'a self, lo: &K, hi: &K) -> impl Iterator<Item = &K> + 'a {
+        let mut q: Vec<&K> = Vec::new();
+        self._keys_range(&self.root, &mut q, lo, hi);
+        q.into_iter()
+    }
+    pub fn keys_iter<'a>(&'a self) -> Iter<'a, K, V> {
+        Iter {
+            stack: Vec::new(),
+            current: self.root.as_ref().map(|r| &**r),
+        }
+    }
+    pub fn into_iter(self) -> IntoIter<K, V> {
+        // take self
+        IntoIter(self)
+    }
 
-    // TODO: not sure whether it was the right way to implement in
-    // pub fn keys(&self) -> impl Iterator<Item = &K> {
-    //     self.keys.iter()
-    // }
-    // pub fn keys_range<'a>(&'a self, lo: &K, hi: &K) -> impl Iterator<Item = &K> + 'a {
-    //     let lo = self.lower_bound(lo);
-    //     let hi = self.upper_bound(hi);
-    //     self.keys.iter().take(hi).skip(lo)
-    // }
-
-    // pub fn check(&self) -> bool {
-    //     self.keys.windows(2).all(|w| w[0] <= w[1])
-    // }
+    pub fn check(&self) -> bool {
+        self.keys().windows(2).all(|w| w[0] <= w[1])
+    }
 }
 
 // private methods
-impl<K: Eq + Ord, V> BSTree<K, V> {
+impl<K: Ord, V> BSTree<K, V> {
     fn _len(&self, list: &List<K, V>) -> usize {
         list.as_ref().map_or(0, |p| p.size)
     }
@@ -87,6 +116,52 @@ impl<K: Eq + Ord, V> BSTree<K, V> {
     }
     fn _max<'a>(&self, node: &'a Node<K, V>) -> &'a K {
         node.right.as_ref().map_or(&node.key, |v| self._max(&v))
+    }
+
+    fn _floor<'a>(&self, list: &'a List<K, V>, key: &K) -> Option<&'a K> {
+        list.as_ref().and_then(|p| {
+            if key < &p.key {
+                self._floor(&p.left, key)
+            } else if key > &p.key {
+                self._floor(&p.right, key).or(Some(&p.key))
+            } else {
+                Some(&p.key)
+            }
+        })
+    }
+    fn _ceiling<'a>(&self, list: &'a List<K, V>, key: &K) -> Option<&'a K> {
+        list.as_ref().and_then(|p| {
+            if key < &p.key {
+                self._ceiling(&p.left, key).or(Some(&p.key))
+            } else if key > &p.key {
+                self._ceiling(&p.right, key)
+            } else {
+                Some(&p.key)
+            }
+        })
+    }
+    fn _select<'a>(&self, list: &'a List<K, V>, i: usize) -> Option<&'a K> {
+        list.as_ref().and_then(|b| {
+            let ls = b.left.as_ref().map_or(0, |b| b.size);
+            if i < ls {
+                self._select(&b.left, i)
+            } else if i > ls {
+                self._select(&b.right, i - ls - 1)
+            } else {
+                Some(&b.key)
+            }
+        })
+    }
+    fn _rank(&self, list: &List<K, V>, key: &K) -> usize {
+        list.as_ref().map_or(0, |b| {
+            if key < &b.key {
+                self._rank(&b.left, key)
+            } else if key > &b.key {
+                self._rank(&b.left, key) + 1 + self._rank(&b.right, key)
+            } else {
+                b.left.as_ref().map_or(0, |b| b.size)
+            }
+        })
     }
 
     fn _get<'a>(&self, node: &'a Node<K, V>, key: &K) -> Option<&'a V> {
@@ -115,6 +190,120 @@ impl<K: Eq + Ord, V> BSTree<K, V> {
                 b
             }
         }
+    }
+
+    fn _delete_min(&mut self, list: List<K, V>) -> List<K, V> {
+        list.and_then(|mut b| match b.left {
+            None => b.right,
+            Some(l) => {
+                b.left = self._delete_min(Some(l));
+                b.size = 1 + self._len(&b.left) + self._len(&b.right);
+                Some(b)
+            }
+        })
+    }
+    fn _delete_max(&mut self, list: List<K, V>) -> List<K, V> {
+        list.and_then(|mut b| match b.right {
+            None => b.left,
+            Some(r) => {
+                b.right = self._delete_max(Some(r));
+                b.size = 1 + self._len(&b.left) + self._len(&b.right);
+                Some(b)
+            }
+        })
+    }
+    fn _delete(&mut self, list: List<K, V>, key: &K) -> List<K, V> {
+        list.and_then(|mut b| {
+            if key < &b.key {
+                b.left = self._delete(b.left, key);
+            } else if key > &b.key {
+                b.right = self._delete(b.right, key);
+            } else {
+                if b.right.is_none() {
+                    return b.left;
+                }
+                if b.left.is_none() {
+                    return b.right;
+                }
+
+                // use min of right sub-tree as the new node
+                let t = b.left.take();
+                let (child, x) = self._pop_min(b.right.unwrap());
+                b = x.unwrap();
+                b.right = child;
+                b.left = t;
+            }
+            b.size = 1 + self._len(&b.left) + self._len(&b.right);
+            Some(b)
+        })
+    }
+    fn _pop_min(&mut self, mut b: Box<Node<K, V>>) -> (List<K, V>, List<K, V>) {
+        match b.left {
+            None => (b.right.take(), Some(b)),
+            Some(l) => {
+                let (child, min) = self._pop_min(l);
+                b.left = child;
+                b.size = 1 + self._len(&b.left) + self._len(&b.right);
+                (Some(b), min)
+            }
+        }
+    }
+
+    fn _keys<'a>(&self, list: &'a List<K, V>, q: &mut Vec<&'a K>) {
+        if let Some(ref b) = list {
+            self._keys(&b.left, q);
+            q.push(&b.key);
+            self._keys(&b.right, q);
+        }
+    }
+    fn _keys_range<'a>(&self, list: &'a List<K, V>, q: &mut Vec<&'a K>, lo: &K, hi: &K) {
+        if let Some(ref b) = list {
+            if lo < &b.key {
+                self._keys_range(&b.left, q, lo, hi);
+            }
+            if lo <= &b.key && &b.key <= hi {
+                q.push(&b.key);
+            }
+            if hi > &b.key {
+                self._keys_range(&b.right, q, lo, hi);
+            }
+        }
+    }
+}
+
+/// own the tree
+pub struct IntoIter<K, V>(BSTree<K, V>);
+
+impl<K: Ord, V> Iterator for IntoIter<K, V> {
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop_min()
+    }
+}
+
+/// Iterating as inorder traversal
+pub struct Iter<'a, K, V> {
+    stack: Vec<&'a Node<K, V>>,
+    current: Option<&'a Node<K, V>>,
+}
+impl<'a, K, V> Iterator for Iter<'a, K, V> {
+    type Item = (&'a K, &'a V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // push left childen for visiting (travel to the min)
+        while let Some(ref l) = self.current {
+            self.stack.push(l);
+            self.current = l.left.as_ref().map(|x| &**x);
+        }
+
+        // process the top in stack and point current to the right child
+        self.stack.pop().map(|n| {
+            if let Some(ref r) = n.right {
+                self.current = Some(r);
+            }
+            (&n.key, &n.value)
+        })
     }
 }
 
@@ -162,15 +351,6 @@ mod tests {
         assert_eq!(Some(&"android".into()), st.min());
         assert_eq!(Some(&"iphone".into()), st.max());
         assert_eq!(Some(&800), st.get(&"blackberry".into()));
-        // assert!(st.check());
-
-        {
-            // mutuable borrow
-            // let mut it = st.keys();
-            // assert_eq!(Some(&"android".into()), it.next());
-            // assert_eq!(Some(&"blackberry".into()), it.next());
-            // assert_eq!(Some(&"iphone".into()), it.next());
-        }
 
         st.delete_min();
         assert_eq!(2, st.len());
@@ -182,21 +362,117 @@ mod tests {
         assert_eq!(Some(&"blackberry".into()), st.max());
     }
 
-    // #[test]
-    // fn keys_range() {
-    //     let mut st = BSTree::<u32, u32>::new();
-    //     for i in 1..10 {
-    //         st.put(i, i * 2);
-    //     }
-    //     let v = st.keys_range(&1, &3).collect::<Vec<_>>();
-    //     assert_eq!([&1, &2, &3], &v[..]);
-    //     let v = st.keys_range(&0, &3).collect::<Vec<_>>();
-    //     assert_eq!([&1, &2, &3], &v[..]);
-    //     let v = st.keys_range(&8, &9).collect::<Vec<_>>();
-    //     assert_eq!([&8, &9], &v[..]);
-    //     let v = st.keys_range(&8, &20).collect::<Vec<_>>();
-    //     assert_eq!([&8, &9], &v[..]);
-    // }
+    #[test]
+    fn order_methods() {
+        let mut st = BSTree::<String, usize>::new();
+        for c in "SEACRHMX".chars() {
+            st.put(c.to_string(), 1);
+        }
+        assert_eq!(8, st.len());
+
+        assert_eq!(None, st.floor(&"0".into()));
+        assert_eq!(Some(&"E".into()), st.floor(&"E".into()));
+        assert_eq!(Some(&"E".into()), st.floor(&"G".into()));
+        assert_eq!(Some(&"C".into()), st.floor(&"C".into()));
+        assert_eq!(Some(&"S".into()), st.floor(&"S".into()));
+        assert_eq!(Some(&"X".into()), st.floor(&"Z".into()));
+
+        assert_eq!(Some(&"A".into()), st.ceiling(&"0".into()));
+        assert_eq!(Some(&"A".into()), st.ceiling(&"A".into()));
+        assert_eq!(Some(&"X".into()), st.ceiling(&"X".into()));
+        assert_eq!(Some(&"M".into()), st.ceiling(&"M".into()));
+        assert_eq!(Some(&"C".into()), st.ceiling(&"B".into()));
+        assert_eq!(Some(&"H".into()), st.ceiling(&"G".into()));
+        assert_eq!(None, st.ceiling(&"Z".into()));
+
+        assert_eq!(Some(&"A".into()), st.select(0));
+        assert_eq!(Some(&"C".into()), st.select(1));
+        assert_eq!(Some(&"S".into()), st.select(6));
+        assert_eq!(Some(&"X".into()), st.select(7));
+        assert_eq!(None, st.select(8));
+        assert_eq!(None, st.select(9));
+
+        assert_eq!(0, st.rank(&"0".into()));
+        assert_eq!(0, st.rank(&"A".into()));
+        assert_eq!(1, st.rank(&"B".into()));
+        assert_eq!(1, st.rank(&"C".into()));
+        assert_eq!(2, st.rank(&"D".into()));
+        assert_eq!(6, st.rank(&"S".into()));
+        assert_eq!(7, st.rank(&"X".into()));
+        assert_eq!(8, st.rank(&"Z".into()));
+    }
+
+    #[test]
+    fn deletions() {
+        let mut st = BSTree::<String, usize>::new();
+        for c in "SEACRHMX".chars() {
+            st.put(c.to_string(), 1);
+        }
+        assert_eq!(8, st.len());
+
+        st.delete(&"A".into());
+        assert_eq!(7, st.len());
+        assert_eq!(Some(&"C".into()), st.min());
+        assert_eq!(Some(&"X".into()), st.max());
+
+        st.delete(&"M".into());
+        assert_eq!(6, st.len());
+
+        st.delete(&"S".into());
+        assert_eq!(5, st.len());
+        assert_eq!(Some(&"C".into()), st.min());
+        assert_eq!(Some(&"X".into()), st.max());
+    }
+
+    #[test]
+    fn keys() {
+        let mut st = BSTree::<String, usize>::new();
+        for c in "SEACRHMX".chars() {
+            st.put(c.to_string(), 1);
+        }
+
+        let keys = st.keys().iter().fold(String::new(), |acc, v| acc + v);
+        assert_eq!("ACEHMRSX", keys);
+
+        assert!(st.check());
+    }
+
+    #[test]
+    fn keys_range() {
+        let mut st = BSTree::<u32, u32>::new();
+        for i in 1..10 {
+            st.put(i, i * 2);
+        }
+        assert!(st.check());
+
+        let v = st.keys_range(&1, &3).collect::<Vec<_>>();
+        assert_eq!([&1, &2, &3], &v[..]);
+        let v = st.keys_range(&0, &3).collect::<Vec<_>>();
+        assert_eq!([&1, &2, &3], &v[..]);
+        let v = st.keys_range(&8, &9).collect::<Vec<_>>();
+        assert_eq!([&8, &9], &v[..]);
+        let v = st.keys_range(&8, &20).collect::<Vec<_>>();
+        assert_eq!([&8, &9], &v[..]);
+    }
+
+    #[test]
+    fn keys_iter() {
+        let mut st = BSTree::<String, usize>::new();
+        for c in "SEACRHMX".chars() {
+            st.put(c.to_string(), 1);
+        }
+
+        let mut it = st.keys_iter();
+        assert_eq!(Some((&"A".into(), &1)), it.next());
+        assert_eq!(Some((&"C".into(), &1)), it.next());
+        assert_eq!(Some((&"E".into(), &1)), it.next());
+        assert_eq!(Some((&"H".into(), &1)), it.next());
+        assert_eq!(Some((&"M".into(), &1)), it.next());
+        assert_eq!(Some((&"R".into(), &1)), it.next());
+        assert_eq!(Some((&"S".into(), &1)), it.next());
+        assert_eq!(Some((&"X".into(), &1)), it.next());
+        assert_eq!(None, it.next());
+    }
 
     #[test]
     fn random_100() {
@@ -204,14 +480,25 @@ mod tests {
         for i in thread_rng().gen_iter::<u32>().take(100) {
             st.put(i, i);
         }
-        let mut last_k = st.min().unwrap().clone();
-        assert_eq!(Some(&last_k), st.get(&last_k));
+        let (mut last_k, last_v) = st.pop_min().unwrap();
+        assert_eq!(last_k, last_v);
         for _i in 1..100 {
-            st.delete_min();
-            let k = st.min().unwrap();
-            assert!(&last_k <= k);
-            assert_eq!(Some(k), st.get(&k));
-            last_k = *k;
+            let (k, v) = st.pop_min().unwrap();
+            assert_eq!(k, v);
+            assert!(last_k <= k);
+            last_k = k;
         }
+    }
+
+    #[test]
+    fn random_100_into_iter() {
+        let mut st = BSTree::<u32, u32>::new();
+        for i in thread_rng().gen_iter::<u32>().take(100) {
+            st.put(i, i);
+        }
+        st.into_iter()
+            .collect::<Vec<_>>()
+            .windows(2)
+            .all(|w| w[0].0 <= w[1].0);
     }
 }

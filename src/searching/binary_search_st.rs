@@ -64,7 +64,17 @@ impl<K: Eq + Ord, V> BinarySearchST<K, V> {
     }
 
     pub fn floor(&self, key: &K) -> Option<&K> {
-        self.keys.get(self.lower_bound(key))
+        //self.keys.get(self.lower_bound(key))
+        let lo = self.lower_bound(key);
+        self.keys.get(lo).and_then(|k| {
+            if k == key {
+                Some(k)
+            } else if lo == 0 {
+                None
+            } else {
+                self.keys.get(lo - 1)
+            }
+        })
     }
     pub fn ceiling(&self, key: &K) -> Option<&K> {
         self.keys.get(self.upper_bound(key) - 1)
