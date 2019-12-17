@@ -9,7 +9,7 @@ use test::{black_box, Bencher}; // `black_box` prevents `f` from being optimized
 
 use algs4_rs::sorting::*;
 
-// please told me how to write macro...
+// please teach me how to write macro...
 #[bench]
 fn sort_int7_base(b: &mut Bencher) {
 	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();

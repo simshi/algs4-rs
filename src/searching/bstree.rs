@@ -69,14 +69,11 @@ impl<K: Ord, V> BSTree<K, V> {
         self.root = self._delete(r, key);
     }
     pub fn pop_min(&mut self) -> Option<(K, V)> {
-        self.root
-            .take()
-            .and_then(|b| {
-                let (r, x) = self._pop_min(b);
-                self.root = r;
-                x.map(|b| (b.key, b.value))
-            })
-            .or(None)
+        self.root.take().and_then(|b| {
+            let (r, x) = self._pop_min(b);
+            self.root = r;
+            x.map(|b| (b.key, b.value))
+        })
     }
 
     pub fn keys(&self) -> Vec<&K> {
@@ -386,6 +383,10 @@ mod tests {
         assert_eq!(6, st.rank(&"S".into()));
         assert_eq!(7, st.rank(&"X".into()));
         assert_eq!(8, st.rank(&"Z".into()));
+
+        for i in 0..8 {
+            assert_eq!(i, st.rank(st.select(i).unwrap()));
+        }
     }
 
     #[test]

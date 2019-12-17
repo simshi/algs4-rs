@@ -1,4 +1,4 @@
-# Learning Algorithm 4th edition in Rust
+# Learning Basic Algorithms in Rust
 - Idiomatic Rust
 - [Algorithms, 4th Edition by Robert Sedgewick](https://algs4.cs.princeton.edu/)
 
