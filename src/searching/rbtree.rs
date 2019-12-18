@@ -22,6 +22,12 @@ fn is_red<K, V>(list: &List<K, V>) -> bool {
         _ => false,
     })
 }
+fn is_red_left_child<K, V>(list: &List<K, V>) -> bool {
+    list.as_ref().map_or(false, |n| is_red(&n.left))
+}
+fn is_red_right_child<K, V>(list: &List<K, V>) -> bool {
+    list.as_ref().map_or(false, |n| is_red(&n.right))
+}
 
 pub struct RBTree<K: Ord, V> {
     root: List<K, V>,
@@ -59,13 +65,13 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     pub fn check(&self) -> bool {
-        self.is_bst() && self.is_23() && self.is_balanced()
+        self.is_bst() && self.is_234() && self.is_balanced()
     }
     pub fn is_bst(&self) -> bool {
         Self::_is_bst(&self.root, None, None)
     }
-    pub fn is_23(&self) -> bool {
-        Self::_is_23(&self.root)
+    pub fn is_234(&self) -> bool {
+        Self::_is_234(&self.root)
     }
     pub fn is_balanced(&self) -> bool {
         let mut height = 0;
@@ -150,12 +156,12 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         }
     }
-    fn _is_23(list: &List<K, V>) -> bool {
+    fn _is_234(list: &List<K, V>) -> bool {
         match list {
             None => true,
             Some(ref node) => match (&node.color, is_red(&node.left) || is_red(&node.right)) {
                 (Red, true) => false,
-                _ => Self::_is_23(&node.left) && Self::_is_23(&node.right),
+                _ => Self::_is_234(&node.left) && Self::_is_234(&node.right),
             },
         }
     }
@@ -189,6 +195,11 @@ impl<K: Ord, V> RBTree<K, V> {
                 size: 1,
             }),
             Some(mut b) => {
+                // elimate the case where P's Sibling is RED
+                if is_red(&b.left) && is_red(&b.right) {
+                    Self::flip_colors(&mut b);
+                }
+
                 match key.cmp(&b.key) {
                     Equal => b.value = value,
                     Less => b.left = Some(self._put(b.left, key, value)),
@@ -201,9 +212,6 @@ impl<K: Ord, V> RBTree<K, V> {
                 }
                 if is_red(&b.left) && b.left.as_ref().map_or(false, |l| is_red(&l.left)) {
                     b = Self::rotate_right(b);
-                }
-                if is_red(&b.left) && is_red(&b.right) {
-                    Self::flip_colors(&mut b);
                 }
 
                 b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
@@ -336,6 +344,16 @@ mod tests {
             assert_eq!(i, st.rank(st.select(i).unwrap()));
         }
 
+        assert!(st.check());
+    }
+
+    #[test]
+    fn ordered_insertion() {
+        let mut st = RBTree::<usize, usize>::new();
+        for i in 0..10 {
+            st.put(i, i)
+        }
+        assert_eq!(10, st.len());
         assert!(st.check());
     }
 }

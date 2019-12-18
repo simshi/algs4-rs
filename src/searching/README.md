@@ -14,4 +14,4 @@
 - bonus fun: implement `Iter` and `IntoIter`, `Iter` is implemented by iterating (inorder tree traversal) with a stack and a current pointer, not by a preallocated queue, which is more fun~.
 
 ## Red Black Tree
-- left leaning 2-3 tree
+- It's left leaning 2-3 tree in the book, but I implement as 2-3-4 tree, more complex, more fun!
