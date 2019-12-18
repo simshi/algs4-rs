@@ -85,6 +85,9 @@ impl<K: Ord, V> RBTree<K, V> {
         Self::_is_balanced(&self.root, height)
     }
 
+    pub fn contains(&self, key: &K) -> bool {
+        self.get(key).is_some()
+    }
     pub fn get(&self, key: &K) -> Option<&V> {
         self.root.as_ref().and_then(|p| self._get(p, key))
     }
@@ -95,8 +98,13 @@ impl<K: Ord, V> RBTree<K, V> {
         self.root = Some(n);
     }
 
-    pub fn contains(&self, key: &K) -> bool {
-        self.get(key).is_some()
+    pub fn delete_min(&mut self) {
+        let r = self.root.take();
+        let (mut n, _) = Self::_delete_min(r);
+        if let Some(r) = n.as_mut() {
+            r.color = Black;
+        }
+        self.root = n;
     }
 }
 
@@ -220,6 +228,38 @@ impl<K: Ord, V> RBTree<K, V> {
         }
     }
 
+    fn _delete_min(list: List<K, V>) -> (List<K, V>, bool) {
+        list.map_or((None, true), |mut b| match b.left {
+            None => {
+                if let Red = b.color {
+                    // no impact on black-height
+                    (b.right, true)
+                } else if is_red(&b.right) {
+                    // add one to black-height
+                    if let Some(r) = b.right.as_mut() {
+                        r.color = Black;
+                    }
+                    (b.right, true)
+                } else {
+                    (b.right, false)
+                }
+            }
+            Some(mut b) => {
+                let (child, balanced) = Self::_delete_min(b.left);
+                b.left = child;
+                b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+                if balanced {
+                    return (Some(b), true);
+                }
+
+                match b.color {
+                    Red => Self::fix_left_p(b),
+                    _ => Self::fix_left_black_p(b),
+                }
+            }
+        })
+    }
+
     fn rotate_left(mut node: Box<Node<K, V>>) -> Box<Node<K, V>> {
         let mut x = node.right.unwrap();
         node.right = x.left.take();
@@ -247,6 +287,62 @@ impl<K: Ord, V> RBTree<K, V> {
         }
         if let Some(n) = node.right.as_mut() {
             n.color = Black;
+        }
+    }
+
+    fn fix_left_p(mut b: Box<Node<K, V>>) -> (List<K, V>, bool) {
+        if is_red_left_child(&b.right) {
+            // case: left_P-SL
+            b.right = Some(Self::rotate_right(b.right.unwrap()));
+        }
+        if is_red_right_child(&b.right) {
+            // case: left_P-SR
+            b = Self::rotate_left(b);
+            if let Some(n) = b.left.as_mut() {
+                n.color = Black;
+            }
+            // must be Some
+            if let Some(n) = b.right.as_mut() {
+                n.color = Black;
+            }
+            (Some(b), true)
+        } else {
+            // case: left_P with S/SL/SR are all black, S must not None since b must lost a black
+            b.color = Black;
+            if let Some(n) = b.right.as_mut() {
+                n.color = Red;
+            }
+            (Some(b), false)
+        }
+    }
+    fn fix_left_black_p(mut b: Box<Node<K, V>>) -> (List<K, V>, bool) {
+        if is_red(&b.right) {
+            // case: left_S
+            b = Self::rotate_left(b);
+            // go one layer down to fix
+            let (child, balanced) = Self::fix_left_p(b.left.unwrap());
+            b.left = child;
+            // b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+            if balanced {
+                return (Some(b), true);
+            }
+            Self::fix_left_black_p(b)
+        } else if is_red_right_child(&b.right) {
+            // case: left_P-SR
+            b = Self::rotate_left(b);
+            if let Some(n) = b.left.as_mut() {
+                n.color = Black;
+            }
+            // must be Some
+            if let Some(n) = b.right.as_mut() {
+                n.color = Black;
+            }
+            (Some(b), true)
+        } else {
+            if let Some(n) = b.right.as_mut() {
+                n.color = Red;
+            }
+            (Some(b), false)
         }
     }
 }
@@ -355,5 +451,24 @@ mod tests {
         }
         assert_eq!(10, st.len());
         assert!(st.check());
+    }
+
+    #[test]
+    fn delete_min() {
+        let mut st = RBTree::<usize, usize>::new();
+        for i in 0..10 {
+            st.put(i, i);
+        }
+        st.delete_min();
+        // assert_eq!(9, st.len());
+        assert_eq!(Some(&1), st.min());
+        assert!(st.check());
+        // assert_eq!(9, st.len());
+
+        st.delete_min();
+        // assert_eq!(8, st.len());
+        assert_eq!(Some(&2), st.min());
+        assert!(st.check());
+        assert_eq!(8, st.len());
     }
 }
