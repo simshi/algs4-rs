@@ -40,32 +40,32 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     pub fn min(&self) -> Option<&K> {
-        self.root.as_ref().map(|p| self._min(p))
+        self.root.as_ref().map(|p| Self::_min(p))
     }
     pub fn max(&self) -> Option<&K> {
-        self.root.as_ref().map(|p| self._max(p))
+        self.root.as_ref().map(|p| Self::_max(p))
     }
     pub fn floor(&self, key: &K) -> Option<&K> {
-        self._floor(&self.root, key)
+        Self::_floor(&self.root, key)
     }
     pub fn ceiling(&self, key: &K) -> Option<&K> {
-        self._ceiling(&self.root, key)
+        Self::_ceiling(&self.root, key)
     }
     pub fn select(&self, i: usize) -> Option<&K> {
-        self._select(&self.root, i)
+        Self::_select(&self.root, i)
     }
     pub fn rank(&self, key: &K) -> usize {
-        self._rank(&self.root, key)
+        Self::_rank(&self.root, key)
     }
 
     pub fn check(&self) -> bool {
         self.is_bst() && self.is_23() && self.is_balanced()
     }
     pub fn is_bst(&self) -> bool {
-        self._is_bst(&self.root, None, None)
+        Self::_is_bst(&self.root, None, None)
     }
     pub fn is_23(&self) -> bool {
-        self._is_23(&self.root)
+        Self::_is_23(&self.root)
     }
     pub fn is_balanced(&self) -> bool {
         let mut height = 0;
@@ -76,7 +76,7 @@ impl<K: Ord, V> RBTree<K, V> {
             }
             x = &b.left;
         }
-        is_balanced(&self.root, height)
+        Self::_is_balanced(&self.root, height)
     }
 
     pub fn get(&self, key: &K) -> Option<&V> {
@@ -96,68 +96,77 @@ impl<K: Ord, V> RBTree<K, V> {
 
 // private methods
 impl<K: Ord, V> RBTree<K, V> {
-    fn _min<'a>(&self, node: &'a Node<K, V>) -> &'a K {
-        node.left.as_ref().map_or(&node.key, |v| self._min(&v))
-    }
-    fn _max<'a>(&self, node: &'a Node<K, V>) -> &'a K {
-        node.right.as_ref().map_or(&node.key, |v| self._max(&v))
+    fn size(list: &List<K, V>) -> usize {
+        list.as_ref().map_or(0, |p| p.size)
     }
 
-    fn _floor<'a>(&self, list: &'a List<K, V>, key: &K) -> Option<&'a K> {
+    fn _min<'a>(node: &'a Node<K, V>) -> &'a K {
+        node.left.as_ref().map_or(&node.key, |v| Self::_min(&v))
+    }
+    fn _max<'a>(node: &'a Node<K, V>) -> &'a K {
+        node.right.as_ref().map_or(&node.key, |v| Self::_max(&v))
+    }
+
+    fn _floor<'a>(list: &'a List<K, V>, key: &K) -> Option<&'a K> {
         list.as_ref().and_then(|p| match key.cmp(&p.key) {
             Equal => Some(&p.key),
-            Less => self._floor(&p.left, key),
-            Greater => self._floor(&p.right, key).or(Some(&p.key)),
+            Less => Self::_floor(&p.left, key),
+            Greater => Self::_floor(&p.right, key).or(Some(&p.key)),
         })
     }
-    fn _ceiling<'a>(&self, list: &'a List<K, V>, key: &K) -> Option<&'a K> {
+    fn _ceiling<'a>(list: &'a List<K, V>, key: &K) -> Option<&'a K> {
         list.as_ref().and_then(|p| match key.cmp(&p.key) {
             Equal => Some(&p.key),
-            Less => self._ceiling(&p.left, key).or(Some(&p.key)),
-            Greater => self._ceiling(&p.right, key),
+            Less => Self::_ceiling(&p.left, key).or(Some(&p.key)),
+            Greater => Self::_ceiling(&p.right, key),
         })
     }
-    fn _select<'a>(&self, list: &'a List<K, V>, i: usize) -> Option<&'a K> {
+    fn _select<'a>(list: &'a List<K, V>, i: usize) -> Option<&'a K> {
         list.as_ref().and_then(|b| {
             let ls = b.left.as_ref().map_or(0, |b| b.size);
             match i.cmp(&ls) {
                 Equal => Some(&b.key),
-                Less => self._select(&b.left, i),
-                Greater => self._select(&b.right, i - ls - 1),
+                Less => Self::_select(&b.left, i),
+                Greater => Self::_select(&b.right, i - ls - 1),
             }
         })
     }
-    fn _rank(&self, list: &List<K, V>, key: &K) -> usize {
+    fn _rank(list: &List<K, V>, key: &K) -> usize {
         list.as_ref().map_or(0, |b| match key.cmp(&b.key) {
             Equal => b.left.as_ref().map_or(0, |b| b.size),
-            Less => self._rank(&b.left, key),
-            Greater => self._rank(&b.left, key) + 1 + self._rank(&b.right, key),
+            Less => Self::_rank(&b.left, key),
+            Greater => Self::_rank(&b.left, key) + 1 + Self::_rank(&b.right, key),
         })
     }
 
-    fn _is_bst(&self, list: &List<K, V>, min: Option<&K>, max: Option<&K>) -> bool {
+    fn _is_bst(list: &List<K, V>, min: Option<&K>, max: Option<&K>) -> bool {
         match list {
             None => true,
             Some(ref node) => {
                 min.map_or(true, |v| &node.key > v)
                     && max.map_or(true, |v| &node.key < v)
-                    && self._is_bst(&node.left, min, Some(&node.key))
-                    && self._is_bst(&node.right, Some(&node.key), max)
+                    && Self::_is_bst(&node.left, min, Some(&node.key))
+                    && Self::_is_bst(&node.right, Some(&node.key), max)
             }
         }
     }
-    fn _is_23(&self, list: &List<K, V>) -> bool {
+    fn _is_23(list: &List<K, V>) -> bool {
         match list {
             None => true,
-            Some(ref node) => {
-                if is_red(&node.right) {
-                    return false;
+            Some(ref node) => match (&node.color, is_red(&node.left) || is_red(&node.right)) {
+                (Red, true) => false,
+                _ => Self::_is_23(&node.left) && Self::_is_23(&node.right),
+            },
+        }
+    }
+    fn _is_balanced(list: &List<K, V>, mut height: usize) -> bool {
+        match list {
+            None => height == 0,
+            Some(ref b) => {
+                if let Black = b.color {
+                    height -= 1;
                 }
-
-                match (&node.color, is_red(&node.left)) {
-                    (Red, true) => false,
-                    _ => self._is_23(&node.left) && self._is_23(&node.right),
-                }
+                Self::_is_balanced(&b.left, height) && Self::_is_balanced(&b.right, height)
             }
         }
     }
@@ -188,63 +197,49 @@ impl<K: Ord, V> RBTree<K, V> {
 
                 // re-balance
                 if !is_red(&b.left) && is_red(&b.right) {
-                    b = rotate_left(b);
+                    b = Self::rotate_left(b);
                 }
                 if is_red(&b.left) && b.left.as_ref().map_or(false, |l| is_red(&l.left)) {
-                    b = rotate_right(b);
+                    b = Self::rotate_right(b);
                 }
                 if is_red(&b.left) && is_red(&b.right) {
-                    flip_colors(&mut b);
+                    Self::flip_colors(&mut b);
                 }
 
-                b.size = 1 + size(&b.left) + size(&b.right);
+                b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
                 b
             }
         }
     }
-}
-fn size<K, V>(list: &List<K, V>) -> usize {
-    list.as_ref().map_or(0, |p| p.size)
-}
-fn is_balanced<K, V>(list: &List<K, V>, mut height: usize) -> bool {
-    match list {
-        None => height == 0,
-        Some(ref b) => {
-            if let Black = b.color {
-                height -= 1;
-            }
-            is_balanced(&b.left, height) && is_balanced(&b.right, height)
-        }
-    }
-}
 
-fn rotate_left<K, V>(mut node: Box<Node<K, V>>) -> Box<Node<K, V>> {
-    let mut x = node.right.unwrap();
-    node.right = x.left.take();
-    x.color = node.color.clone();
-    node.color = Red;
-    x.size = node.size;
-    node.size = size(&node.left) + 1 + size(&node.right);
-    x.left = Some(node);
-    x
-}
-fn rotate_right<K, V>(mut node: Box<Node<K, V>>) -> Box<Node<K, V>> {
-    let mut x = node.left.unwrap();
-    node.left = x.right.take();
-    x.color = node.color.clone();
-    node.color = Red;
-    x.size = node.size;
-    node.size = size(&node.left) + 1 + size(&node.right);
-    x.right = Some(node);
-    x
-}
-fn flip_colors<K, V>(mut node: &mut Box<Node<K, V>>) {
-    node.color = Red;
-    if let Some(n) = node.left.as_mut() {
-        n.color = Black;
+    fn rotate_left(mut node: Box<Node<K, V>>) -> Box<Node<K, V>> {
+        let mut x = node.right.unwrap();
+        node.right = x.left.take();
+        x.color = node.color.clone();
+        node.color = Red;
+        x.size = node.size;
+        node.size = Self::size(&node.left) + 1 + Self::size(&node.right);
+        x.left = Some(node);
+        x
     }
-    if let Some(n) = node.right.as_mut() {
-        n.color = Black;
+    fn rotate_right(mut node: Box<Node<K, V>>) -> Box<Node<K, V>> {
+        let mut x = node.left.unwrap();
+        node.left = x.right.take();
+        x.color = node.color.clone();
+        node.color = Red;
+        x.size = node.size;
+        node.size = Self::size(&node.left) + 1 + Self::size(&node.right);
+        x.right = Some(node);
+        x
+    }
+    fn flip_colors(mut node: &mut Box<Node<K, V>>) {
+        node.color = Red;
+        if let Some(n) = node.left.as_mut() {
+            n.color = Black;
+        }
+        if let Some(n) = node.right.as_mut() {
+            n.color = Black;
+        }
     }
 }
 
