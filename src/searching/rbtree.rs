@@ -18,7 +18,7 @@ impl Color {
 
 type NodePtr<K, V> = Box<Node<K, V>>;
 type List<K, V> = Option<NodePtr<K, V>>;
-struct Node<K, V> {
+pub struct Node<K, V> {
     color: Color,
     key: K,
     value: V,
@@ -33,8 +33,8 @@ impl<K: fmt::Debug, V> fmt::Display for Node<K, V> {
             "{}({:?}):left={:?},right={:?}",
             if let Red = self.color { "Red" } else { "Black" },
             &self.key,
-            self.left.as_ref().and_then(|n| Some(&n.key)),
-            self.right.as_ref().and_then(|n| Some(&n.key)),
+            self.left.as_ref().map(|n| &n.key),
+            self.right.as_ref().map(|n| &n.key),
         )
     }
 }
@@ -49,6 +49,7 @@ fn is_red_right_child<K, V>(list: &List<K, V>) -> bool {
     list.as_ref().map_or(false, |n| is_red(&n.right))
 }
 
+#[derive(Default)]
 pub struct RBTree<K: Ord, V> {
     root: List<K, V>,
 }
@@ -84,7 +85,7 @@ impl<K: Ord, V> RBTree<K, V> {
         Self::_rank(&self.root, key)
     }
 
-    pub fn iter<'a>(&'a self) -> Iter<'a, K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             stack: Vec::new(),
             current: self.root.as_ref().map(|r| &**r),
@@ -113,7 +114,7 @@ impl<K: Ord, V> RBTree<K, V> {
         Self::_is_234(&self.root)
     }
     pub fn is_balanced(&self) -> bool {
-        let mut height = 0;
+        let mut height: isize = 0;
         let mut x = &self.root;
         while let Some(ref b) = x {
             if !b.color.is_red() {
@@ -138,16 +139,21 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     pub fn delete_min(&mut self) {
-        let r = self.root.take();
-        let (mut n, _) = Self::_delete_min(r);
+        let (mut n, _) = Self::_delete_min(self.root.take());
         if let Some(r) = n.as_mut() {
             r.color = Black;
         }
         self.root = n;
     }
     pub fn delete_max(&mut self) {
-        let r = self.root.take();
-        let (mut n, _) = Self::_delete_max(r);
+        let (mut n, _) = Self::_delete_max(self.root.take());
+        if let Some(r) = n.as_mut() {
+            r.color = Black;
+        }
+        self.root = n;
+    }
+    pub fn delete(&mut self, key: &K) {
+        let (mut n, _) = Self::_delete(self.root.take(), key);
         if let Some(r) = n.as_mut() {
             r.color = Black;
         }
@@ -220,7 +226,7 @@ impl<K: Ord, V> RBTree<K, V> {
             },
         }
     }
-    fn _is_balanced(list: &List<K, V>, mut height: usize) -> bool {
+    fn _is_balanced(list: &List<K, V>, mut height: isize) -> bool {
         match list {
             None => height == 0,
             Some(ref b) => {
@@ -328,6 +334,95 @@ impl<K: Ord, V> RBTree<K, V> {
                 Self::fix_right(b)
             }
         })
+    }
+    fn _delete(list: List<K, V>, key: &K) -> (List<K, V>, bool) {
+        list.map_or((None, true), |mut b| {
+            let balanced: bool;
+            let mut is_left = false;
+            match key.cmp(&b.key) {
+                Less => {
+                    let (child, sub_b) = Self::_delete(b.left, key);
+                    b.left = child;
+                    balanced = sub_b;
+                    is_left = true;
+                }
+                Greater => {
+                    let (child, sub_b) = Self::_delete(b.right, key);
+                    b.right = child;
+                    balanced = sub_b;
+                }
+                Equal => {
+                    if b.left.is_none() {
+                        if b.color.is_red() {
+                            return (b.right, true);
+                        } else if is_red(&b.right) {
+                            if let Some(c) = b.right.as_mut() {
+                                c.color = Black;
+                            }
+                            return (b.right, true);
+                        } else {
+                            return (b.right, false);
+                        }
+                    }
+                    if b.right.is_none() {
+                        if b.color.is_red() {
+                            return (b.left, true);
+                        } else if is_red(&b.left) {
+                            if let Some(c) = b.left.as_mut() {
+                                c.color = Black;
+                            }
+                            return (b.left, true);
+                        } else {
+                            return (b.left, false);
+                        }
+                    }
+
+                    // replace with b's successor (min of right sub-tree)
+                    let (x, mut s, sub_b) = Self::_pop_min(b.right.unwrap());
+                    b.right = x;
+                    std::mem::swap(&mut b.key, &mut s.key);
+                    std::mem::swap(&mut b.value, &mut s.value);
+                    balanced = sub_b;
+                }
+            }
+
+            b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+            if balanced {
+                (Some(b), balanced)
+            } else if is_left {
+                Self::fix_left(b)
+            } else {
+                Self::fix_right(b)
+            }
+        })
+    }
+    fn _pop_min(mut b: NodePtr<K, V>) -> (List<K, V>, NodePtr<K, V>, bool) {
+        match b.left {
+            None => {
+                if b.color.is_red() {
+                    (b.right.take(), b, true)
+                } else if is_red(&b.right) {
+                    if let Some(r) = b.right.as_mut() {
+                        r.color = Black;
+                    }
+                    (b.right.take(), b, true)
+                } else {
+                    (b.right.take(), b, false)
+                }
+            }
+            Some(left) => {
+                let (x, min, sub_b) = Self::_pop_min(left);
+                b.left = x;
+                b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+
+                if sub_b {
+                    (Some(b), min, true)
+                } else {
+                    let (x, sub_b) = Self::fix_left(b);
+                    (x, min, sub_b)
+                }
+            }
+        }
     }
 
     fn rotate_left(mut node: NodePtr<K, V>) -> NodePtr<K, V> {
@@ -459,7 +554,8 @@ pub struct Iter<'a, K, V> {
     current: Option<&'a Node<K, V>>,
 }
 impl<'a, K, V> Iterator for Iter<'a, K, V> {
-    type Item = (&'a K, &'a V);
+    // type Item = (&'a K, &'a V);
+    type Item = &'a Node<K, V>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // push left childen for visiting (travel to the min)
@@ -473,7 +569,8 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
             if let Some(ref r) = n.right {
                 self.current = Some(r);
             }
-            (&n.key, &n.value)
+            // (&n.key, &n.value)
+            n
         })
     }
 }
@@ -625,6 +722,66 @@ mod tests {
         st.delete_max();
         assert_eq!(0, st.len());
         assert_eq!(None, st.max());
+        assert_eq!(None, st.check_error());
+    }
+
+    #[test]
+    fn delete_basic() {
+        let mut st = RBTree::<usize, usize>::new();
+        for i in 0..20 {
+            st.put(i, i);
+        }
+
+        st.delete(&0);
+        // println!("====1====");
+        // for n in st.iter() {
+        //     println!("{}", n);
+        // }
+        assert_eq!(19, st.len());
+        assert_eq!(&1, st.min().unwrap());
+        assert_eq!(&19, st.max().unwrap());
+        assert_eq!(None, st.check_error());
+
+        st.delete(&5);
+        assert_eq!(18, st.len());
+        assert_eq!(&1, st.min().unwrap());
+        assert_eq!(&19, st.max().unwrap());
+        assert_eq!(None, st.check_error());
+
+        st.delete(&15);
+        assert_eq!(17, st.len());
+        assert_eq!(&1, st.min().unwrap());
+        assert_eq!(&19, st.max().unwrap());
+        assert_eq!(None, st.check_error());
+
+        st.delete(&1);
+        assert_eq!(16, st.len());
+        assert_eq!(&2, st.min().unwrap());
+        assert_eq!(&19, st.max().unwrap());
+        assert_eq!(None, st.check_error());
+
+        st.delete(&6);
+        assert_eq!(15, st.len());
+        assert_eq!(&2, st.min().unwrap());
+        assert_eq!(&19, st.max().unwrap());
+        assert_eq!(None, st.check_error());
+
+        st.delete(&16);
+        assert_eq!(14, st.len());
+        assert_eq!(&2, st.min().unwrap());
+        assert_eq!(&19, st.max().unwrap());
+        assert_eq!(None, st.check_error());
+
+        st.delete(&17);
+        assert_eq!(13, st.len());
+        assert_eq!(&2, st.min().unwrap());
+        assert_eq!(&19, st.max().unwrap());
+        assert_eq!(None, st.check_error());
+
+        st.delete(&9);
+        assert_eq!(12, st.len());
+        assert_eq!(&2, st.min().unwrap());
+        assert_eq!(&19, st.max().unwrap());
         assert_eq!(None, st.check_error());
     }
 }
