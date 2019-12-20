@@ -12,11 +12,12 @@ impl Color {
         self == &Red
     }
     fn flip(&mut self) {
-        std::mem::replace(self, if self.is_red() { Black } else { Red });
+        *self = if self.is_red() { Black } else { Red };
     }
 }
 
-type List<K, V> = Option<Box<Node<K, V>>>;
+type NodePtr<K, V> = Box<Node<K, V>>;
+type List<K, V> = Option<NodePtr<K, V>>;
 struct Node<K, V> {
     color: Color,
     key: K,
@@ -238,7 +239,7 @@ impl<K: Ord, V> RBTree<K, V> {
             Greater => node.right.as_ref().and_then(|n| self._get(&n, key)),
         }
     }
-    fn _put(&mut self, list: List<K, V>, key: K, value: V) -> Box<Node<K, V>> {
+    fn _put(&mut self, list: List<K, V>, key: K, value: V) -> NodePtr<K, V> {
         match list {
             None => Box::new(Node {
                 color: Red,
@@ -329,7 +330,7 @@ impl<K: Ord, V> RBTree<K, V> {
         })
     }
 
-    fn rotate_left(mut node: Box<Node<K, V>>) -> Box<Node<K, V>> {
+    fn rotate_left(mut node: NodePtr<K, V>) -> NodePtr<K, V> {
         let mut x = node.right.unwrap();
         node.right = x.left.take();
         x.color = node.color.clone();
@@ -339,7 +340,7 @@ impl<K: Ord, V> RBTree<K, V> {
         x.left = Some(node);
         x
     }
-    fn rotate_right(mut node: Box<Node<K, V>>) -> Box<Node<K, V>> {
+    fn rotate_right(mut node: NodePtr<K, V>) -> NodePtr<K, V> {
         let mut x = node.left.unwrap();
         node.left = x.right.take();
         x.color = node.color.clone();
@@ -349,7 +350,7 @@ impl<K: Ord, V> RBTree<K, V> {
         x.right = Some(node);
         x
     }
-    fn flip_colors(node: &mut Box<Node<K, V>>) {
+    fn flip_colors(node: &mut NodePtr<K, V>) {
         // n must have different color with its children
         node.color.flip();
         if let Some(n) = node.left.as_mut() {
@@ -361,7 +362,7 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     // fix left sub-tree lost one black-height
-    fn fix_left(mut b: Box<Node<K, V>>) -> (List<K, V>, bool) {
+    fn fix_left(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
         if is_red(&b.right) {
             // case: left_S
             b = Self::rotate_left(b);
@@ -375,7 +376,7 @@ impl<K: Ord, V> RBTree<K, V> {
 
         Self::fix_left_black_s(b)
     }
-    fn fix_left_black_s(mut b: Box<Node<K, V>>) -> (List<K, V>, bool) {
+    fn fix_left_black_s(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
         if is_red_left_child(&b.right) && !is_red_right_child(&b.right) {
             // case: left_SL, transfer to left_SR
             b.right = Some(Self::rotate_right(b.right.unwrap()));
@@ -407,7 +408,7 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     // fix right sub-tree lost one black-height
-    fn fix_right(mut b: Box<Node<K, V>>) -> (List<K, V>, bool) {
+    fn fix_right(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
         if is_red(&b.left) {
             // case: right_S
             b = Self::rotate_right(b);
@@ -421,7 +422,7 @@ impl<K: Ord, V> RBTree<K, V> {
 
         Self::fix_right_black_s(b)
     }
-    fn fix_right_black_s(mut b: Box<Node<K, V>>) -> (List<K, V>, bool) {
+    fn fix_right_black_s(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
         if !is_red_left_child(&b.left) && is_red_right_child(&b.left) {
             // case: red SR, transfer to red SL
             b.left = Some(Self::rotate_left(b.left.unwrap()));
