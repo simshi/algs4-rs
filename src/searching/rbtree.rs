@@ -1,12 +1,20 @@
 use std::cmp::Ordering::{Equal, Greater, Less};
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 enum Color {
     Black,
     Red,
 }
 use Color::*;
+impl Color {
+    fn is_red(&self) -> bool {
+        self == &Red
+    }
+    fn flip(&mut self) {
+        std::mem::replace(self, if self.is_red() { Black } else { Red });
+    }
+}
 
 type List<K, V> = Option<Box<Node<K, V>>>;
 struct Node<K, V> {
@@ -31,10 +39,7 @@ impl<K: fmt::Debug, V> fmt::Display for Node<K, V> {
 }
 
 fn is_red<K, V>(list: &List<K, V>) -> bool {
-    list.as_ref().map_or(false, |n| match n.color {
-        Red => true,
-        _ => false,
-    })
+    list.as_ref().map_or(false, |n| n.color.is_red())
 }
 fn is_red_left_child<K, V>(list: &List<K, V>) -> bool {
     list.as_ref().map_or(false, |n| is_red(&n.left))
@@ -110,7 +115,7 @@ impl<K: Ord, V> RBTree<K, V> {
         let mut height = 0;
         let mut x = &self.root;
         while let Some(ref b) = x {
-            if let Black = b.color {
+            if !b.color.is_red() {
                 height += 1;
             }
             x = &b.left;
@@ -218,7 +223,7 @@ impl<K: Ord, V> RBTree<K, V> {
         match list {
             None => height == 0,
             Some(ref b) => {
-                if let Black = b.color {
+                if !b.color.is_red() {
                     height -= 1;
                 }
                 Self::_is_balanced(&b.left, height) && Self::_is_balanced(&b.right, height)
@@ -272,7 +277,7 @@ impl<K: Ord, V> RBTree<K, V> {
     fn _delete_min(list: List<K, V>) -> (List<K, V>, bool) {
         list.map_or((None, true), |mut b| match b.left {
             None => {
-                if let Red = b.color {
+                if b.color.is_red() {
                     // no impact on black-height
                     (b.right, true)
                 } else if is_red(&b.right) {
@@ -299,7 +304,7 @@ impl<K: Ord, V> RBTree<K, V> {
     fn _delete_max(list: List<K, V>) -> (List<K, V>, bool) {
         list.map_or((None, true), |mut b| match b.right {
             None => {
-                if let Red = b.color {
+                if b.color.is_red() {
                     // no impact on black-height
                     (b.left, true)
                 } else if is_red(&b.left) {
@@ -344,13 +349,14 @@ impl<K: Ord, V> RBTree<K, V> {
         x.right = Some(node);
         x
     }
-    fn flip_colors(mut node: &mut Box<Node<K, V>>) {
-        node.color = Red;
+    fn flip_colors(node: &mut Box<Node<K, V>>) {
+        // n must have different color with its children
+        node.color.flip();
         if let Some(n) = node.left.as_mut() {
-            n.color = Black;
+            n.color.flip();
         }
         if let Some(n) = node.right.as_mut() {
-            n.color = Black;
+            n.color.flip();
         }
     }
 
@@ -388,14 +394,9 @@ impl<K: Ord, V> RBTree<K, V> {
             (Some(b), true)
         } else {
             // case: S/SL/SR are all black
-            let balanced = if let Red = b.color {
-                // path P->X add one black-height while P->S keep same
-                true
-            } else {
-                // sub one black-height from right sub-tree and escalate to up
-                false
-            };
-
+            // if red: path P->X add one black-height while P->S stays same
+            // if black: sub one black-height from right sub-tree and escalate to up
+            let balanced = b.color.is_red();
             b.color = Black;
             if let Some(n) = b.right.as_mut() {
                 n.color = Red;
@@ -439,14 +440,9 @@ impl<K: Ord, V> RBTree<K, V> {
             (Some(b), true)
         } else {
             // case: S/SL/SR are all black
-            let balanced = if let Red = b.color {
-                // path P->X add one black-height while P->S keep same
-                true
-            } else {
-                // sub one black-height from right sub-tree and escalate to up
-                false
-            };
-
+            // if red: path P->X add one black-height while P->S stays same
+            // if black: sub one black-height from right sub-tree and escalate to up
+            let balanced = b.color.is_red();
             b.color = Black;
             if let Some(n) = b.left.as_mut() {
                 n.color = Red;
