@@ -274,17 +274,47 @@ impl<K: Ord, V> RBTree<K, V> {
 
                 match key.cmp(&b.key) {
                     Equal => b.value = value,
-                    Less => b.left = Some(self._put(b.left, key, value)),
-                    Greater => b.right = Some(self._put(b.right, key, value)),
+                    Less => {
+                        let mut left = self._put(b.left, key, value);
+                        if left.color.is_red() && is_red(&left.right) {
+                            //      G             G
+                            //    /   \         /   \
+                            // R(P)    S ->  R(PR)   S
+                            //   \           /
+                            //   R(PR)      R(P)
+                            left = Self::rotate_left(left);
+                        }
+                        b.left = Some(left);
+                        if is_red(&b.left) && is_red_left_child(&b.left) {
+                            //        G              P
+                            //      /   \          /   \
+                            //    R(P)   S  ->  R(PL)  R(G)
+                            //    /  \                /   \
+                            // R(PL) (PR)          (PR)    S
+                            b = Self::rotate_right(b);
+                        }
+                    }
+                    Greater => {
+                        let mut right = self._put(b.right, key, value);
+                        if right.color.is_red() && is_red(&right.left) {
+                            //      G            G
+                            //    /   \        /   \
+                            //   S    R(P) -> S    R(PL)
+                            //        /              \
+                            //      R(PL)            R(P)
+                            right = Self::rotate_right(right);
+                        }
+                        b.right = Some(right);
+                        if is_red(&b.right) && is_red_right_child(&b.right) {
+                            //      G                  P
+                            //    /   \              /   \
+                            //   S    R(P)   ->   R(G)   PR
+                            //       /  \        /   \
+                            //    (PL)  R(PR)   S    (PL)
+                            b = Self::rotate_left(b);
+                        }
+                    }
                 };
-
-                // re-balance
-                if !is_red(&b.left) && is_red(&b.right) {
-                    b = Self::rotate_left(b);
-                }
-                if is_red(&b.left) && b.left.as_ref().map_or(false, |l| is_red(&l.left)) {
-                    b = Self::rotate_right(b);
-                }
 
                 b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
                 b
@@ -708,7 +738,7 @@ mod tests {
     }
 
     #[test]
-    fn delete_basic() {
+    fn deletion() {
         let mut st = RBTree::<usize, usize>::new();
         for i in 0..20 {
             st.put(i, i);
@@ -764,6 +794,18 @@ mod tests {
         assert_eq!(12, st.len());
         assert_eq!(&2, st.min().unwrap());
         assert_eq!(&19, st.max().unwrap());
+        assert_eq!(None, st.check_error());
+    }
+    #[test]
+    fn put_fix_right() {
+        let mut st = RBTree::<usize, usize>::new();
+        st.put(3, 30);
+        st.put(1, 10);
+        st.put(5, 50);
+        st.delete(&1);
+        st.put(4, 40);
+
+        assert_eq!(3, st.len());
         assert_eq!(None, st.check_error());
     }
 }
