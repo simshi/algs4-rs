@@ -14,6 +14,14 @@ impl Color {
     fn flip(&mut self) {
         *self = if self.is_red() { Black } else { Red };
     }
+    fn flip_red(&mut self) -> bool {
+        if self.is_red() {
+            *self = Black;
+            true
+        } else {
+            false
+        }
+    }
 }
 
 type NodePtr<K, V> = Box<Node<K, V>>;
@@ -47,6 +55,9 @@ fn is_red_left_child<K, V>(list: &List<K, V>) -> bool {
 }
 fn is_red_right_child<K, V>(list: &List<K, V>) -> bool {
     list.as_ref().map_or(false, |n| is_red(&n.right))
+}
+fn flip_red<K, V>(list: &mut List<K, V>) -> bool {
+    list.as_mut().map_or(false, |n| n.color.flip_red())
 }
 
 #[derive(Default)]
@@ -283,20 +294,7 @@ impl<K: Ord, V> RBTree<K, V> {
 
     fn _delete_min(list: List<K, V>) -> (List<K, V>, bool) {
         list.map_or((None, true), |mut b| match b.left {
-            None => {
-                if b.color.is_red() {
-                    // no impact on black-height
-                    (b.right, true)
-                } else if is_red(&b.right) {
-                    // add one to black-height
-                    if let Some(r) = b.right.as_mut() {
-                        r.color = Black;
-                    }
-                    (b.right, true)
-                } else {
-                    (b.right, false)
-                }
-            }
+            None => Self::fix_self_with_right_child(&mut b),
             Some(_) => {
                 let (child, balanced) = Self::_delete_min(b.left);
                 b.left = child;
@@ -304,26 +302,13 @@ impl<K: Ord, V> RBTree<K, V> {
                 if balanced {
                     return (Some(b), true);
                 }
-                Self::fix_left(b)
+                Self::fix_left_with_sibling(b)
             }
         })
     }
     fn _delete_max(list: List<K, V>) -> (List<K, V>, bool) {
         list.map_or((None, true), |mut b| match b.right {
-            None => {
-                if b.color.is_red() {
-                    // no impact on black-height
-                    (b.left, true)
-                } else if is_red(&b.left) {
-                    // add one to black-height
-                    if let Some(r) = b.left.as_mut() {
-                        r.color = Black;
-                    }
-                    (b.left, true)
-                } else {
-                    (b.left, false)
-                }
-            }
+            None => Self::fix_self_with_left_child(&mut b),
             Some(_) => {
                 let (child, balanced) = Self::_delete_max(b.right);
                 b.right = child;
@@ -331,7 +316,7 @@ impl<K: Ord, V> RBTree<K, V> {
                 if balanced {
                     return (Some(b), true);
                 }
-                Self::fix_right(b)
+                Self::fix_right_with_sibling(b)
             }
         })
     }
@@ -353,28 +338,10 @@ impl<K: Ord, V> RBTree<K, V> {
                 }
                 Equal => {
                     if b.left.is_none() {
-                        if b.color.is_red() {
-                            return (b.right, true);
-                        } else if is_red(&b.right) {
-                            if let Some(c) = b.right.as_mut() {
-                                c.color = Black;
-                            }
-                            return (b.right, true);
-                        } else {
-                            return (b.right, false);
-                        }
+                        return Self::fix_self_with_right_child(&mut b);
                     }
                     if b.right.is_none() {
-                        if b.color.is_red() {
-                            return (b.left, true);
-                        } else if is_red(&b.left) {
-                            if let Some(c) = b.left.as_mut() {
-                                c.color = Black;
-                            }
-                            return (b.left, true);
-                        } else {
-                            return (b.left, false);
-                        }
+                        return Self::fix_self_with_left_child(&mut b);
                     }
 
                     // replace with b's successor (min of right sub-tree)
@@ -390,25 +357,17 @@ impl<K: Ord, V> RBTree<K, V> {
             if balanced {
                 (Some(b), balanced)
             } else if is_left {
-                Self::fix_left(b)
+                Self::fix_left_with_sibling(b)
             } else {
-                Self::fix_right(b)
+                Self::fix_right_with_sibling(b)
             }
         })
     }
     fn _pop_min(mut b: NodePtr<K, V>) -> (List<K, V>, NodePtr<K, V>, bool) {
         match b.left {
             None => {
-                if b.color.is_red() {
-                    (b.right.take(), b, true)
-                } else if is_red(&b.right) {
-                    if let Some(r) = b.right.as_mut() {
-                        r.color = Black;
-                    }
-                    (b.right.take(), b, true)
-                } else {
-                    (b.right.take(), b, false)
-                }
+                let (x, balanced) = Self::fix_self_with_right_child(&mut b);
+                (x, b, balanced)
             }
             Some(left) => {
                 let (x, min, sub_b) = Self::_pop_min(left);
@@ -418,7 +377,7 @@ impl<K: Ord, V> RBTree<K, V> {
                 if sub_b {
                     (Some(b), min, true)
                 } else {
-                    let (x, sub_b) = Self::fix_left(b);
+                    let (x, sub_b) = Self::fix_left_with_sibling(b);
                     (x, min, sub_b)
                 }
             }
@@ -456,8 +415,31 @@ impl<K: Ord, V> RBTree<K, V> {
         }
     }
 
+    fn fix_self_with_right_child(b: &mut NodePtr<K, V>) -> (List<K, V>, bool) {
+        if b.color.is_red() {
+            // no impact on black-height
+            (b.right.take(), true)
+        } else if flip_red(&mut b.right) {
+            // add one to black-height
+            (b.right.take(), true)
+        } else {
+            (b.right.take(), false)
+        }
+    }
+    fn fix_self_with_left_child(b: &mut NodePtr<K, V>) -> (List<K, V>, bool) {
+        if b.color.is_red() {
+            // no impact on black-height
+            (b.left.take(), true)
+        } else if flip_red(&mut b.left) {
+            // add one to black-height
+            (b.left.take(), true)
+        } else {
+            (b.left.take(), false)
+        }
+    }
+
     // fix left sub-tree lost one black-height
-    fn fix_left(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
+    fn fix_left_with_sibling(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
         if is_red(&b.right) {
             // case: left_S
             b = Self::rotate_left(b);
@@ -503,7 +485,7 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     // fix right sub-tree lost one black-height
-    fn fix_right(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
+    fn fix_right_with_sibling(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
         if is_red(&b.left) {
             // case: right_S
             b = Self::rotate_right(b);
