@@ -471,9 +471,13 @@ impl<K: Ord, V> RBTree<K, V> {
     // fix left sub-tree lost one black-height
     fn fix_left_with_sibling(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
         if is_red(&b.right) {
-            // case: left_S
+            //      P              S
+            //    /   \          /   \
+            //   X    R(S) ->  R(P)   SR
+            //        / \      /  \
+            //      SL  SR    X    SL
             b = Self::rotate_left(b);
-            // go one layer down to fix
+            // go one layer down to fix R(P) sub-tree
             let (child, balanced) = Self::fix_left_black_s(b.left.unwrap());
             b.left = child;
             if balanced {
@@ -485,12 +489,22 @@ impl<K: Ord, V> RBTree<K, V> {
     }
     fn fix_left_black_s(mut b: NodePtr<K, V>) -> (List<K, V>, bool) {
         if is_red_left_child(&b.right) && !is_red_right_child(&b.right) {
-            // case: left_SL, transfer to left_SR
+            //     (P)           (P)
+            //    /   \         /   \
+            //   X     S   ->  X     SL
+            //       /   \             \
+            //    R(SL)  SR            R(S)
+            //                           \
+            //                           SR
             b.right = Some(Self::rotate_right(b.right.unwrap()));
         }
 
         if is_red_right_child(&b.right) {
-            // case: left_SR, borrow one black-height from S sub-tree
+            //     (P)             (S)
+            //    /   \           /   \
+            //   X     S   ->    P     SR
+            //       /   \      / \
+            //    (SL)  R(SR)  X  (SL)
             b = Self::rotate_left(b);
             if let Some(n) = b.left.as_mut() {
                 n.color = Black;
@@ -501,9 +515,13 @@ impl<K: Ord, V> RBTree<K, V> {
 
             (Some(b), true)
         } else {
-            // case: S/SL/SR are all black
-            // if red: path P->X add one black-height while P->S stays same
-            // if black: sub one black-height from right sub-tree and escalate to up
+            //     (P)            P
+            //    /   \         /   \
+            //   X     S   ->  X    R(S)
+            //       /   \         /   \
+            //      SL   SR       SL   SR
+            // if P was red: path P->X added one black-height while P->S stays same, then we're done
+            // if P was black: sub one black-height from right sub-tree and escalate to up
             let balanced = b.color.is_red();
             b.color = Black;
             if let Some(n) = b.right.as_mut() {
@@ -590,7 +608,7 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    // use rand::{thread_rng, Rng};
+    use rand::{thread_rng, Rng};
 
     #[test]
     fn empty() {
@@ -807,5 +825,22 @@ mod tests {
 
         assert_eq!(3, st.len());
         assert_eq!(None, st.check_error());
+    }
+
+    #[test]
+    fn random_100() {
+        let mut st = RBTree::<u32, usize>::new();
+        for (i, k) in thread_rng().gen_iter::<u32>().enumerate().take(100) {
+            match (i % 5, i % 7) {
+                (0, 0) => {
+                    st.put(k, i);
+                    st.delete(&k);
+                }
+                (0, _) => st.delete(&k),
+                _ => st.put(k, i),
+            }
+            assert_eq!(None, st.check_error());
+        }
+        assert_eq!(80, st.len());
     }
 }
