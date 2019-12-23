@@ -25,13 +25,13 @@ impl Color {
 }
 
 type NodePtr<K, V> = Box<Node<K, V>>;
-type List<K, V> = Option<NodePtr<K, V>>;
+type Tree<K, V> = Option<NodePtr<K, V>>;
 pub struct Node<K, V> {
     color: Color,
     key: K,
     value: V,
-    left: List<K, V>,
-    right: List<K, V>,
+    left: Tree<K, V>,
+    right: Tree<K, V>,
     size: usize,
 }
 impl<K: fmt::Debug, V> fmt::Display for Node<K, V> {
@@ -47,22 +47,22 @@ impl<K: fmt::Debug, V> fmt::Display for Node<K, V> {
     }
 }
 
-fn is_red<K, V>(list: &List<K, V>) -> bool {
-    list.as_ref().map_or(false, |n| n.color.is_red())
+fn is_red<K, V>(tree: &Tree<K, V>) -> bool {
+    tree.as_ref().map_or(false, |n| n.color.is_red())
 }
-fn is_red_left_child<K, V>(list: &List<K, V>) -> bool {
-    list.as_ref().map_or(false, |n| is_red(&n.left))
+fn is_red_left_child<K, V>(tree: &Tree<K, V>) -> bool {
+    tree.as_ref().map_or(false, |n| is_red(&n.left))
 }
-fn is_red_right_child<K, V>(list: &List<K, V>) -> bool {
-    list.as_ref().map_or(false, |n| is_red(&n.right))
+fn is_red_right_child<K, V>(tree: &Tree<K, V>) -> bool {
+    tree.as_ref().map_or(false, |n| is_red(&n.right))
 }
-fn flip_red<K, V>(list: &mut List<K, V>) -> bool {
-    list.as_mut().map_or(false, |n| n.color.flip_red())
+fn flip_red<K, V>(tree: &mut Tree<K, V>) -> bool {
+    tree.as_mut().map_or(false, |n| n.color.flip_red())
 }
 
 #[derive(Default)]
 pub struct RBTree<K: Ord, V> {
-    root: List<K, V>,
+    root: Tree<K, V>,
 }
 
 impl<K: Ord, V> RBTree<K, V> {
@@ -174,8 +174,8 @@ impl<K: Ord, V> RBTree<K, V> {
 
 // private methods
 impl<K: Ord, V> RBTree<K, V> {
-    fn size(list: &List<K, V>) -> usize {
-        list.as_ref().map_or(0, |p| p.size)
+    fn size(tree: &Tree<K, V>) -> usize {
+        tree.as_ref().map_or(0, |p| p.size)
     }
 
     fn _min<'a>(node: &'a Node<K, V>) -> &'a K {
@@ -185,22 +185,22 @@ impl<K: Ord, V> RBTree<K, V> {
         node.right.as_ref().map_or(&node.key, |v| Self::_max(&v))
     }
 
-    fn _floor<'a>(list: &'a List<K, V>, key: &K) -> Option<&'a K> {
-        list.as_ref().and_then(|p| match key.cmp(&p.key) {
+    fn _floor<'a>(tree: &'a Tree<K, V>, key: &K) -> Option<&'a K> {
+        tree.as_ref().and_then(|p| match key.cmp(&p.key) {
             Equal => Some(&p.key),
             Less => Self::_floor(&p.left, key),
             Greater => Self::_floor(&p.right, key).or(Some(&p.key)),
         })
     }
-    fn _ceiling<'a>(list: &'a List<K, V>, key: &K) -> Option<&'a K> {
-        list.as_ref().and_then(|p| match key.cmp(&p.key) {
+    fn _ceiling<'a>(tree: &'a Tree<K, V>, key: &K) -> Option<&'a K> {
+        tree.as_ref().and_then(|p| match key.cmp(&p.key) {
             Equal => Some(&p.key),
             Less => Self::_ceiling(&p.left, key).or(Some(&p.key)),
             Greater => Self::_ceiling(&p.right, key),
         })
     }
-    fn _select<'a>(list: &'a List<K, V>, i: usize) -> Option<&'a K> {
-        list.as_ref().and_then(|b| {
+    fn _select<'a>(tree: &'a Tree<K, V>, i: usize) -> Option<&'a K> {
+        tree.as_ref().and_then(|b| {
             let ls = b.left.as_ref().map_or(0, |b| b.size);
             match i.cmp(&ls) {
                 Equal => Some(&b.key),
@@ -209,16 +209,16 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         })
     }
-    fn _rank(list: &List<K, V>, key: &K) -> usize {
-        list.as_ref().map_or(0, |b| match key.cmp(&b.key) {
+    fn _rank(tree: &Tree<K, V>, key: &K) -> usize {
+        tree.as_ref().map_or(0, |b| match key.cmp(&b.key) {
             Equal => b.left.as_ref().map_or(0, |b| b.size),
             Less => Self::_rank(&b.left, key),
             Greater => Self::_rank(&b.left, key) + 1 + Self::_rank(&b.right, key),
         })
     }
 
-    fn _is_bst(list: &List<K, V>, min: Option<&K>, max: Option<&K>) -> bool {
-        match list {
+    fn _is_bst(tree: &Tree<K, V>, min: Option<&K>, max: Option<&K>) -> bool {
+        match tree {
             None => true,
             Some(ref node) => {
                 min.map_or(true, |v| &node.key > v)
@@ -228,8 +228,8 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         }
     }
-    fn _is_234(list: &List<K, V>) -> bool {
-        match list {
+    fn _is_234(tree: &Tree<K, V>) -> bool {
+        match tree {
             None => true,
             Some(ref node) => match (&node.color, is_red(&node.left) || is_red(&node.right)) {
                 (Red, true) => false,
@@ -237,8 +237,8 @@ impl<K: Ord, V> RBTree<K, V> {
             },
         }
     }
-    fn _is_balanced(list: &List<K, V>, mut height: isize) -> bool {
-        match list {
+    fn _is_balanced(tree: &Tree<K, V>, mut height: isize) -> bool {
+        match tree {
             None => height == 0,
             Some(ref b) => {
                 if !b.color.is_red() {
@@ -256,8 +256,8 @@ impl<K: Ord, V> RBTree<K, V> {
             Greater => node.right.as_ref().and_then(|n| self._get(&n, key)),
         }
     }
-    fn _put(&mut self, list: List<K, V>, key: K, value: V) -> NodePtr<K, V> {
-        match list {
+    fn _put(&mut self, tree: Tree<K, V>, key: K, value: V) -> NodePtr<K, V> {
+        match tree {
             None => Box::new(Node {
                 color: Red,
                 key: key,
@@ -322,8 +322,8 @@ impl<K: Ord, V> RBTree<K, V> {
         }
     }
 
-    fn _delete_min(list: List<K, V>) -> (List<K, V>, bool) {
-        list.map_or((None, true), |mut b| match b.left {
+    fn _delete_min(tree: Tree<K, V>) -> (Tree<K, V>, bool) {
+        tree.map_or((None, true), |mut b| match b.left {
             None => Self::fix_self_with_right_child(&mut b),
             Some(_) => {
                 let (child, balanced) = Self::_delete_min(b.left);
@@ -336,8 +336,8 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         })
     }
-    fn _delete_max(list: List<K, V>) -> (List<K, V>, bool) {
-        list.map_or((None, true), |mut b| match b.right {
+    fn _delete_max(tree: Tree<K, V>) -> (Tree<K, V>, bool) {
+        tree.map_or((None, true), |mut b| match b.right {
             None => Self::fix_self_with_left_child(&mut b),
             Some(_) => {
                 let (child, balanced) = Self::_delete_max(b.right);
@@ -350,8 +350,8 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         })
     }
-    fn _delete(list: List<K, V>, key: &K) -> (List<K, V>, bool) {
-        list.map_or((None, true), |mut b| {
+    fn _delete(tree: Tree<K, V>, key: &K) -> (Tree<K, V>, bool) {
+        tree.map_or((None, true), |mut b| {
             let balanced: bool;
             let mut is_left = false;
             match key.cmp(&b.key) {
@@ -393,7 +393,7 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         })
     }
-    fn _pop_min(mut b: NodePtr<K, V>) -> (List<K, V>, NodePtr<K, V>, bool) {
+    fn _pop_min(mut b: NodePtr<K, V>) -> (Tree<K, V>, NodePtr<K, V>, bool) {
         match b.left {
             None => {
                 let (x, balanced) = Self::fix_self_with_right_child(&mut b);
@@ -445,7 +445,7 @@ impl<K: Ord, V> RBTree<K, V> {
         }
     }
 
-    fn fix_self_with_right_child(b: &mut NodePtr<K, V>) -> (List<K, V>, bool) {
+    fn fix_self_with_right_child(b: &mut NodePtr<K, V>) -> (Tree<K, V>, bool) {
         if b.color.is_red() {
             // no impact on black-height
             (b.right.take(), true)
@@ -456,7 +456,7 @@ impl<K: Ord, V> RBTree<K, V> {
             (b.right.take(), false)
         }
     }
-    fn fix_self_with_left_child(b: &mut NodePtr<K, V>) -> (List<K, V>, bool) {
+    fn fix_self_with_left_child(b: &mut NodePtr<K, V>) -> (Tree<K, V>, bool) {
         if b.color.is_red() {
             // no impact on black-height
             (b.left.take(), true)
@@ -469,7 +469,7 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     // fix left sub-tree lost one black-height
-    fn fix_left_with_sibling(mut p: NodePtr<K, V>) -> (List<K, V>, bool) {
+    fn fix_left_with_sibling(mut p: NodePtr<K, V>) -> (Tree<K, V>, bool) {
         if is_red(&p.right) {
             //      P              S
             //    /   \          /   \
@@ -487,7 +487,7 @@ impl<K: Ord, V> RBTree<K, V> {
 
         Self::fix_left_black_s(p)
     }
-    fn fix_left_black_s(mut p: NodePtr<K, V>) -> (List<K, V>, bool) {
+    fn fix_left_black_s(mut p: NodePtr<K, V>) -> (Tree<K, V>, bool) {
         if is_red_left_child(&p.right) && !is_red_right_child(&p.right) {
             //     (P)           (P)
             //    /   \         /   \
@@ -533,7 +533,7 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     // fix right sub-tree lost one black-height
-    fn fix_right_with_sibling(mut p: NodePtr<K, V>) -> (List<K, V>, bool) {
+    fn fix_right_with_sibling(mut p: NodePtr<K, V>) -> (Tree<K, V>, bool) {
         if is_red(&p.left) {
             // case: right_S
             p = Self::rotate_right(p);
@@ -547,7 +547,7 @@ impl<K: Ord, V> RBTree<K, V> {
 
         Self::fix_right_black_s(p)
     }
-    fn fix_right_black_s(mut p: NodePtr<K, V>) -> (List<K, V>, bool) {
+    fn fix_right_black_s(mut p: NodePtr<K, V>) -> (Tree<K, V>, bool) {
         if !is_red_left_child(&p.left) && is_red_right_child(&p.left) {
             // case: red SR, transfer to red SL
             p.left = Some(Self::rotate_left(p.left.unwrap()));
