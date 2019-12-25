@@ -58,6 +58,12 @@ impl<K: Ord, V> Node<K, V> {
             size: 1,
         }
     }
+    fn flip_colors(&mut self) {
+        // n must have different color with its children
+        self.color.flip();
+        self.left.flip_color();
+        self.right.flip_color();
+    }
 }
 
 #[derive(Default)]
@@ -78,22 +84,22 @@ impl<K: Ord, V> RBTree<K, V> {
     }
 
     pub fn min(&self) -> Option<&K> {
-        self.root.as_ref().map(|p| Self::_min(p))
+        self.root.min()
     }
     pub fn max(&self) -> Option<&K> {
-        self.root.as_ref().map(|p| Self::_max(p))
+        self.root.max()
     }
     pub fn floor(&self, key: &K) -> Option<&K> {
-        Self::_floor(&self.root, key)
+        self.root.floor(key)
     }
     pub fn ceiling(&self, key: &K) -> Option<&K> {
-        Self::_ceiling(&self.root, key)
+        self.root.ceiling(key)
     }
     pub fn select(&self, i: usize) -> Option<&K> {
-        Self::_select(&self.root, i)
+        self.root.select(i)
     }
     pub fn rank(&self, key: &K) -> usize {
-        Self::_rank(&self.root, key)
+        self.root.rank(key)
     }
 
     pub fn iter(&self) -> Iter<'_, K, V> {
@@ -142,31 +148,30 @@ impl<K: Ord, V> RBTree<K, V> {
         self.get(key).is_some()
     }
     pub fn get(&self, key: &K) -> Option<&V> {
-        self.root.as_ref().and_then(|p| self._get(p, key))
+        self.root.get(key)
     }
     pub fn put(&mut self, key: K, value: V) {
-        let a = self.root.take();
-        let mut n = self._put(a, key, value);
+        let mut n = self.root.take().put(key, value);
         n.color = Black;
         self.root = Tree::from(n);
     }
 
     pub fn delete_min(&mut self) {
-        let (mut n, _) = Self::_delete_min(self.root.take());
+        let (mut n, _) = self.root.take().delete_min();
         if let Some(r) = n.as_mut() {
             r.color = Black;
         }
         self.root = n;
     }
     pub fn delete_max(&mut self) {
-        let (mut n, _) = Self::_delete_max(self.root.take());
+        let (mut n, _) = self.root.take().delete_max();
         if let Some(r) = n.as_mut() {
             r.color = Black;
         }
         self.root = n;
     }
     pub fn delete(&mut self, key: &K) {
-        let (mut n, _) = Self::_delete(self.root.take(), key);
+        let (mut n, _) = self.root.take().delete(key);
         if let Some(r) = n.as_mut() {
             r.color = Black;
         }
@@ -184,6 +189,7 @@ impl<K: Ord, V> Tree<K, V> {
         Tree(None)
     }
 
+    // Option<T> methods
     fn as_ref(&self) -> Option<&NodePtr<K, V>> {
         self.0.as_ref()
     }
@@ -206,6 +212,7 @@ impl<K: Ord, V> Tree<K, V> {
         self.0.unwrap()
     }
 
+    // color methods
     fn is_red(&self) -> bool {
         self.0.as_ref().map_or(false, |n| n.color.is_red())
     }
@@ -217,6 +224,11 @@ impl<K: Ord, V> Tree<K, V> {
     }
     fn flip_red(&mut self) -> bool {
         self.0.as_mut().map_or(false, |n| n.color.flip_red())
+    }
+    fn flip_color(&mut self) {
+        if let Some(b) = self.0.as_mut() {
+            b.color.flip();
+        }
     }
 
     fn is_bst(&self, min: Option<&K>, max: Option<&K>) -> bool {
@@ -250,73 +262,70 @@ impl<K: Ord, V> Tree<K, V> {
             }
         }
     }
-}
 
-// private methods
-impl<K: Ord, V> RBTree<K, V> {
-    fn size(tree: &Tree<K, V>) -> usize {
-        tree.as_ref().map_or(0, |p| p.size)
+    fn size(&self) -> usize {
+        self.as_ref().map_or(0, |p| p.size)
     }
 
-    fn _min<'a>(node: &'a Node<K, V>) -> &'a K {
-        node.left.as_ref().map_or(&node.key, |v| Self::_min(&v))
+    fn min(&self) -> Option<&K> {
+        self.0.as_ref().and_then(|v| v.left.min().or(Some(&v.key)))
     }
-    fn _max<'a>(node: &'a Node<K, V>) -> &'a K {
-        node.right.as_ref().map_or(&node.key, |v| Self::_max(&v))
+    fn max(&self) -> Option<&K> {
+        self.0.as_ref().and_then(|v| v.right.max().or(Some(&v.key)))
     }
 
-    fn _floor<'a>(tree: &'a Tree<K, V>, key: &K) -> Option<&'a K> {
-        tree.as_ref().and_then(|p| match key.cmp(&p.key) {
+    fn floor<'a>(&'a self, key: &K) -> Option<&'a K> {
+        self.0.as_ref().and_then(|p| match key.cmp(&p.key) {
             Equal => Some(&p.key),
-            Less => Self::_floor(&p.left, key),
-            Greater => Self::_floor(&p.right, key).or(Some(&p.key)),
+            Less => p.left.floor(key),
+            Greater => p.right.floor(key).or(Some(&p.key)),
         })
     }
-    fn _ceiling<'a>(tree: &'a Tree<K, V>, key: &K) -> Option<&'a K> {
-        tree.as_ref().and_then(|p| match key.cmp(&p.key) {
+    fn ceiling<'a>(&'a self, key: &K) -> Option<&'a K> {
+        self.0.as_ref().and_then(|p| match key.cmp(&p.key) {
             Equal => Some(&p.key),
-            Less => Self::_ceiling(&p.left, key).or(Some(&p.key)),
-            Greater => Self::_ceiling(&p.right, key),
+            Less => p.left.ceiling(key).or(Some(&p.key)),
+            Greater => p.right.ceiling(key),
         })
     }
-    fn _select<'a>(tree: &'a Tree<K, V>, i: usize) -> Option<&'a K> {
-        tree.as_ref().and_then(|b| {
+    fn select<'a>(&'a self, i: usize) -> Option<&'a K> {
+        self.0.as_ref().and_then(|b| {
             let ls = b.left.as_ref().map_or(0, |b| b.size);
             match i.cmp(&ls) {
                 Equal => Some(&b.key),
-                Less => Self::_select(&b.left, i),
-                Greater => Self::_select(&b.right, i - ls - 1),
+                Less => b.left.select(i),
+                Greater => b.right.select(i - ls - 1),
             }
         })
     }
-    fn _rank(tree: &Tree<K, V>, key: &K) -> usize {
-        tree.as_ref().map_or(0, |b| match key.cmp(&b.key) {
+    fn rank(&self, key: &K) -> usize {
+        self.0.as_ref().map_or(0, |b| match key.cmp(&b.key) {
             Equal => b.left.as_ref().map_or(0, |b| b.size),
-            Less => Self::_rank(&b.left, key),
-            Greater => Self::_rank(&b.left, key) + 1 + Self::_rank(&b.right, key),
+            Less => b.left.rank(key),
+            Greater => b.left.rank(key) + 1 + b.right.rank(key),
         })
     }
 
-    fn _get<'a>(&self, node: &'a Node<K, V>, key: &K) -> Option<&'a V> {
-        match key.cmp(&node.key) {
+    fn get<'a>(&'a self, key: &K) -> Option<&'a V> {
+        self.0.as_ref().and_then(|node| match key.cmp(&node.key) {
             Equal => Some(&node.value),
-            Less => node.left.as_ref().and_then(|n| self._get(&n, key)),
-            Greater => node.right.as_ref().and_then(|n| self._get(&n, key)),
-        }
+            Less => node.left.get(key),
+            Greater => node.right.get(key),
+        })
     }
-    fn _put(&mut self, tree: Tree<K, V>, key: K, value: V) -> NodePtr<K, V> {
-        match tree.0 {
+    fn put(self, key: K, value: V) -> NodePtr<K, V> {
+        match self.0 {
             None => Box::new(Node::new(key, value)),
             Some(mut b) => {
                 // split 4-tree to 2-trees, elimate the case where S is RED
                 if b.left.is_red() && b.right.is_red() {
-                    Self::flip_colors(&mut b);
+                    b.flip_colors();
                 }
 
                 match key.cmp(&b.key) {
                     Equal => b.value = value,
                     Less => {
-                        let mut left = self._put(b.left, key, value);
+                        let mut left = b.left.put(key, value);
                         if left.color.is_red() && left.right.is_red() {
                             //      G             G
                             //    /   \         /   \
@@ -336,7 +345,7 @@ impl<K: Ord, V> RBTree<K, V> {
                         }
                     }
                     Greater => {
-                        let mut right = self._put(b.right, key, value);
+                        let mut right = b.right.put(key, value);
                         if right.color.is_red() && right.left.is_red() {
                             //      G            G
                             //    /   \        /   \
@@ -357,19 +366,19 @@ impl<K: Ord, V> RBTree<K, V> {
                     }
                 };
 
-                b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+                b.size = 1 + b.left.size() + b.right.size();
                 b
             }
         }
     }
 
-    fn _delete_min(tree: Tree<K, V>) -> (Tree<K, V>, bool) {
-        tree.map_or((Tree::new(), true), |mut b| match b.left.0 {
+    fn delete_min(self) -> (Tree<K, V>, bool) {
+        self.map_or((Tree::new(), true), |mut b| match b.left.0 {
             None => Self::fix_self_with_right_child(&mut b),
             Some(_) => {
-                let (child, balanced) = Self::_delete_min(b.left);
+                let (child, balanced) = b.left.delete_min();
                 b.left = child;
-                b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+                b.size = 1 + b.left.size() + b.right.size();
                 if balanced {
                     return (Tree::from(b), true);
                 }
@@ -377,13 +386,13 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         })
     }
-    fn _delete_max(tree: Tree<K, V>) -> (Tree<K, V>, bool) {
-        tree.map_or((Tree::new(), true), |mut b| match b.right.0 {
+    fn delete_max(self) -> (Tree<K, V>, bool) {
+        self.0.map_or((Tree::new(), true), |mut b| match b.right.0 {
             None => Self::fix_self_with_left_child(&mut b),
             Some(_) => {
-                let (child, balanced) = Self::_delete_max(b.right);
+                let (child, balanced) = b.right.delete_max();
                 b.right = child;
-                b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+                b.size = 1 + b.left.size() + b.right.size();
                 if balanced {
                     return (Tree::from(b), true);
                 }
@@ -391,19 +400,19 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         })
     }
-    fn _delete(tree: Tree<K, V>, key: &K) -> (Tree<K, V>, bool) {
-        tree.map_or((Tree::new(), true), |mut b| {
+    fn delete(self, key: &K) -> (Tree<K, V>, bool) {
+        self.map_or((Tree::new(), true), |mut b| {
             let balanced: bool;
             let mut is_left = false;
             match key.cmp(&b.key) {
                 Less => {
-                    let (child, sub_b) = Self::_delete(b.left, key);
+                    let (child, sub_b) = b.left.delete(key);
                     b.left = child;
                     balanced = sub_b;
                     is_left = true;
                 }
                 Greater => {
-                    let (child, sub_b) = Self::_delete(b.right, key);
+                    let (child, sub_b) = b.right.delete(key);
                     b.right = child;
                     balanced = sub_b;
                 }
@@ -416,7 +425,7 @@ impl<K: Ord, V> RBTree<K, V> {
                     }
 
                     // replace with b's successor (min of right sub-tree)
-                    let (x, mut s, sub_b) = Self::_pop_min(b.right.unwrap());
+                    let (x, mut s, sub_b) = Self::pop_min(b.right.unwrap());
                     b.right = x;
                     std::mem::swap(&mut b.key, &mut s.key);
                     std::mem::swap(&mut b.value, &mut s.value);
@@ -424,7 +433,7 @@ impl<K: Ord, V> RBTree<K, V> {
                 }
             }
 
-            b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+            b.size = 1 + b.left.size() + b.right.size();
             if balanced {
                 (b.into(), balanced)
             } else if is_left {
@@ -434,16 +443,16 @@ impl<K: Ord, V> RBTree<K, V> {
             }
         })
     }
-    fn _pop_min(mut b: NodePtr<K, V>) -> (Tree<K, V>, NodePtr<K, V>, bool) {
+    fn pop_min(mut b: NodePtr<K, V>) -> (Tree<K, V>, NodePtr<K, V>, bool) {
         match b.left.0 {
             None => {
                 let (x, balanced) = Self::fix_self_with_right_child(&mut b);
                 (x, b, balanced)
             }
             Some(left) => {
-                let (x, min, sub_b) = Self::_pop_min(left);
+                let (x, min, sub_b) = Self::pop_min(left);
                 b.left = x;
-                b.size = 1 + Self::size(&b.left) + Self::size(&b.right);
+                b.size = 1 + b.left.size() + b.right.size();
 
                 if sub_b {
                     (b.into(), min, true)
@@ -455,13 +464,14 @@ impl<K: Ord, V> RBTree<K, V> {
         }
     }
 
+    // operations
     fn rotate_left(mut node: NodePtr<K, V>) -> NodePtr<K, V> {
         let mut x = node.right.unwrap();
         node.right = x.left.take();
         x.color = node.color.clone();
         node.color = Red;
         x.size = node.size;
-        node.size = Self::size(&node.left) + 1 + Self::size(&node.right);
+        node.size = node.left.size() + 1 + node.right.size();
         x.left = Tree::from(node);
         x
     }
@@ -471,19 +481,9 @@ impl<K: Ord, V> RBTree<K, V> {
         x.color = node.color.clone();
         node.color = Red;
         x.size = node.size;
-        node.size = Self::size(&node.left) + 1 + Self::size(&node.right);
+        node.size = node.left.size() + 1 + node.right.size();
         x.right = Tree::from(node);
         x
-    }
-    fn flip_colors(node: &mut NodePtr<K, V>) {
-        // n must have different color with its children
-        node.color.flip();
-        if let Some(n) = node.left.as_mut() {
-            n.color.flip();
-        }
-        if let Some(n) = node.right.as_mut() {
-            n.color.flip();
-        }
     }
 
     fn fix_self_with_right_child(b: &mut NodePtr<K, V>) -> (Tree<K, V>, bool) {
@@ -619,6 +619,7 @@ impl<K: Ord, V> RBTree<K, V> {
         }
     }
 }
+
 /// Iterating as inorder traversal
 pub struct Iter<'a, K, V> {
     stack: Vec<&'a Node<K, V>>,
