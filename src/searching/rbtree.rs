@@ -102,6 +102,9 @@ impl<K: Ord, V> RBTree<K, V> {
         self.root.rank(key)
     }
 
+    pub fn into_iter(self) -> IntoIter<K, V> {
+        IntoIter(self)
+    }
     pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             stack: Vec::new(),
@@ -131,17 +134,7 @@ impl<K: Ord, V> RBTree<K, V> {
         self.root.is_234()
     }
     pub fn is_balanced(&self) -> bool {
-        let height = Self::black_height(&self.root, 0);
-        self.root.is_balanced(height)
-    }
-    fn black_height(tree: &Tree<K, V>, height: isize) -> isize {
-        tree.as_ref().map_or(height, |b| {
-            if b.color.is_red() {
-                Self::black_height(&b.left, height)
-            } else {
-                Self::black_height(&b.left, height + 1)
-            }
-        })
+        self.root.is_balanced(self.root.black_height(0))
     }
 
     pub fn contains(&self, key: &K) -> bool {
@@ -158,24 +151,34 @@ impl<K: Ord, V> RBTree<K, V> {
 
     pub fn delete_min(&mut self) {
         let (mut n, _) = self.root.take().delete_min();
-        if let Some(r) = n.as_mut() {
-            r.color = Black;
-        }
+        n.flip_red();
         self.root = n;
+    }
+    pub fn pop_min(&mut self) -> Option<(K, V)> {
+        let p = self.root.take().pop_min();
+        p.map(|v| {
+            self.root = v.0;
+            (v.1, v.2)
+        })
     }
     pub fn delete_max(&mut self) {
         let (mut n, _) = self.root.take().delete_max();
-        if let Some(r) = n.as_mut() {
-            r.color = Black;
-        }
+        n.flip_red();
         self.root = n;
     }
     pub fn delete(&mut self, key: &K) {
         let (mut n, _) = self.root.take().delete(key);
-        if let Some(r) = n.as_mut() {
-            r.color = Black;
-        }
+        n.flip_red();
         self.root = n;
+    }
+}
+
+// implement drop to avoid stack overflow
+impl<K: Ord, V> Drop for RBTree<K, V> {
+    fn drop(&mut self) {
+        while self.len() > 0 {
+            self.delete_min();
+        }
     }
 }
 
@@ -199,9 +202,9 @@ impl<K: Ord, V> Tree<K, V> {
     fn take(&mut self) -> Self {
         Tree(self.0.take())
     }
-    // fn map<U, F: FnOnce(NodePtr<K, V>) -> U>(self, f: F) -> Option<U> {
-    //     self.0.map(f)
-    // }
+    fn map<U, F: FnOnce(NodePtr<K, V>) -> U>(self, f: F) -> Option<U> {
+        self.0.map(f)
+    }
     fn map_or<U, F: FnOnce(NodePtr<K, V>) -> U>(self, default: U, f: F) -> U {
         self.0.map_or(default, f)
     }
@@ -261,6 +264,15 @@ impl<K: Ord, V> Tree<K, V> {
                 b.left.is_balanced(height) && b.right.is_balanced(height)
             }
         }
+    }
+    fn black_height(&self, height: isize) -> isize {
+        self.0.as_ref().map_or(height, |b| {
+            if b.color.is_red() {
+                b.left.black_height(height)
+            } else {
+                b.left.black_height(height + 1)
+            }
+        })
     }
 
     fn size(&self) -> usize {
@@ -386,6 +398,12 @@ impl<K: Ord, V> Tree<K, V> {
             }
         })
     }
+    fn pop_min(self) -> Option<(Tree<K, V>, K, V)> {
+        self.map(|n| {
+            let (tree, min, _) = Self::_pop_min(n);
+            (tree, min.key, min.value)
+        })
+    }
     fn delete_max(self) -> (Tree<K, V>, bool) {
         self.0.map_or((Tree::new(), true), |mut b| match b.right.0 {
             None => Self::fix_self_with_left_child(&mut b),
@@ -425,7 +443,7 @@ impl<K: Ord, V> Tree<K, V> {
                     }
 
                     // replace with b's successor (min of right sub-tree)
-                    let (x, mut s, sub_b) = Self::pop_min(b.right.unwrap());
+                    let (x, mut s, sub_b) = Self::_pop_min(b.right.unwrap());
                     b.right = x;
                     std::mem::swap(&mut b.key, &mut s.key);
                     std::mem::swap(&mut b.value, &mut s.value);
@@ -443,14 +461,14 @@ impl<K: Ord, V> Tree<K, V> {
             }
         })
     }
-    fn pop_min(mut b: NodePtr<K, V>) -> (Tree<K, V>, NodePtr<K, V>, bool) {
+    fn _pop_min(mut b: NodePtr<K, V>) -> (Tree<K, V>, NodePtr<K, V>, bool) {
         match b.left.0 {
             None => {
                 let (x, balanced) = Self::fix_self_with_right_child(&mut b);
                 (x, b, balanced)
             }
             Some(left) => {
-                let (x, min, sub_b) = Self::pop_min(left);
+                let (x, min, sub_b) = Self::_pop_min(left);
                 b.left = x;
                 b.size = 1 + b.left.size() + b.right.size();
 
@@ -620,14 +638,22 @@ impl<K: Ord, V> Tree<K, V> {
     }
 }
 
+pub struct IntoIter<K: Ord, V>(RBTree<K, V>);
+impl<K: Ord, V> Iterator for IntoIter<K, V> {
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop_min()
+    }
+}
+
 /// Iterating as inorder traversal
 pub struct Iter<'a, K, V> {
     stack: Vec<&'a Node<K, V>>,
     current: Option<&'a Node<K, V>>,
 }
 impl<'a, K: Ord, V> Iterator for Iter<'a, K, V> {
-    // type Item = (&'a K, &'a V);
-    type Item = &'a Node<K, V>;
+    type Item = (&'a K, &'a V);
 
     fn next(&mut self) -> Option<Self::Item> {
         // push left childen for visiting (travel to the min)
@@ -641,8 +667,7 @@ impl<'a, K: Ord, V> Iterator for Iter<'a, K, V> {
             if let Some(ref r) = n.right.0 {
                 self.current = Some(r);
             }
-            // (&n.key, &n.value)
-            n
+            (&n.key, &n.value)
         })
     }
 }
@@ -774,6 +799,7 @@ mod tests {
 
         st.delete_min();
         assert_eq!(0, st.len());
+
         assert_eq!(None, st.min());
         assert_eq!(None, st.check_error());
     }
@@ -805,10 +831,6 @@ mod tests {
         }
 
         st.delete(&0);
-        // println!("====1====");
-        // for n in st.iter() {
-        //     println!("{}", n);
-        // }
         assert_eq!(19, st.len());
         assert_eq!(&1, st.min().unwrap());
         assert_eq!(&19, st.max().unwrap());
@@ -884,5 +906,17 @@ mod tests {
             assert_eq!(None, st.check_error());
         }
         assert_eq!(80, st.len());
+    }
+
+    #[test]
+    fn random_100_into_iter() {
+        let mut st = RBTree::<u32, u32>::new();
+        for i in thread_rng().gen_iter::<u32>().take(100) {
+            st.put(i, i);
+        }
+        st.into_iter()
+            .collect::<Vec<_>>()
+            .windows(2)
+            .all(|w| w[0].0 <= w[1].0);
     }
 }
