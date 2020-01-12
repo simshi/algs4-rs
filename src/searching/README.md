@@ -73,3 +73,10 @@
         - 1.2.3.1 P is red: set P to black, borrow success, done!
         - 1.2.3.2 P is black: X and S sub-tree balanced, but whole P tree lost one black-height, escalate to up layer, P is the new X
   - 2. X is right child of P: a mirror problem.
+
+## Hash ST
+- implementing a linear-probing-hash-symbol-table, though normal hash with RBTree bucket is more general.
+- key points:
+  - resize to keep reasonable memory usage
+  - rehash is required after resize
+  - rehash keys in same cluster after deleting
