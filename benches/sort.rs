@@ -9,86 +9,37 @@ use test::{black_box, Bencher}; // `black_box` prevents `f` from being optimized
 
 use algs4_rs::sorting::*;
 
-// please teach me how to write macro...
+macro_rules! make_bench {
+	($name:ident, $sorter:ident, $count:expr) => {
+		#[bench]
+		fn $name(b: &mut Bencher) {
+			let arr = thread_rng()
+				.gen_iter::<u32>()
+				.take($count)
+				.collect::<Vec<_>>();
+			b.iter(|| {
+				let mut arr = arr.clone();
+				black_box($sorter(&mut arr));
+			})
+		}
+	};
+}
+
 #[bench]
-fn sort_int7_base(b: &mut Bencher) {
+fn sort_7_base(b: &mut Bencher) {
 	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
 	b.iter(|| {
 		let mut _arr = arr.clone();
 	});
 }
-
-#[bench]
-fn sort_int7_insertion(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(insertion_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int7_merge(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int7_merge_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int7_quick(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int7_quick3way(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick3way_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int7_quick_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int7_heap(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int7_heap_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort_opt(&mut arr))
-	});
-}
+make_bench!(sort_7_insertion, insertion_sort, 7);
+make_bench!(sort_7_merge, merge_sort, 7);
+make_bench!(sort_7_merge_opt, merge_sort_opt, 7);
+make_bench!(sort_7_heap, heap_sort, 7);
+make_bench!(sort_7_heap_opt, heap_sort_opt, 7);
+make_bench!(sort_7_quick, quick_sort, 7);
+make_bench!(sort_7_quick3way, quick3way_sort, 7);
+make_bench!(sort_7_quick_opt, quick_sort_opt, 7);
 
 #[bench]
 fn sort_int15_base(b: &mut Bencher) {
