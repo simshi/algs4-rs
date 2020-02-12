@@ -10,5 +10,9 @@ edition = "2018"
 name = "union_find"
 path = "src/bin/union_find.rs"
 
+[[bin]]
+name = "symbol_graph"
+path = "src/bin/symbol_graph.rs"
+
 [dependencies]
 rand = "0.3"

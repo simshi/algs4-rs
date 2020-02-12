@@ -10,15 +10,15 @@ pub struct SymbolGraph {
 impl SymbolGraph {
     pub fn new<'a, T>(edges: T) -> Self
     where
-        T: Iterator<Item = &'a (String, String)>,
+        T: Iterator<Item = (String, String)>,
     {
         let mut st = HashMap::new();
         let mut keys = Vec::new();
         let mut indexed_edgeds = Vec::new();
 
         for (v, w) in edges {
-            let vi = Self::get_or_add(&mut st, &mut keys, v);
-            let wi = Self::get_or_add(&mut st, &mut keys, w);
+            let vi = Self::get_or_add(&mut st, &mut keys, &v);
+            let wi = Self::get_or_add(&mut st, &mut keys, &w);
             indexed_edgeds.push((vi, wi));
         }
 
@@ -40,6 +40,9 @@ impl SymbolGraph {
     }
     pub fn e_size(&self) -> usize {
         self.g.e_size()
+    }
+    pub fn contains(&self, key: &String) -> bool {
+        self.st.get(key).is_some()
     }
 
     pub fn adj<'a>(&'a self, key: &String) -> Iter<'a> {
