@@ -102,9 +102,6 @@ impl<K: Ord, V> RBTree<K, V> {
         self.root.rank(key)
     }
 
-    pub fn into_iter(self) -> IntoIter<K, V> {
-        IntoIter(self)
-    }
     pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             stack: Vec::new(),
@@ -632,6 +629,15 @@ impl<K: Ord, V> Tree<K, V> {
     }
 }
 
+impl<K: Ord, V> IntoIterator for RBTree<K, V> {
+    type Item = (K, V);
+    type IntoIter = IntoIter<K, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        // take self
+        IntoIter(self)
+    }
+}
 pub struct IntoIter<K: Ord, V>(RBTree<K, V>);
 impl<K: Ord, V> Iterator for IntoIter<K, V> {
     type Item = (K, V);

@@ -103,10 +103,6 @@ where
         }
         None
     }
-
-    pub fn into_iter(self) -> IntoIter<K, V> {
-        IntoIter(self)
-    }
 }
 
 // private methods
@@ -138,6 +134,19 @@ where
     }
 }
 
+impl<K, V> IntoIterator for LinearProbingHashST<K, V>
+where
+    K: Hash + Clone + Eq,
+    V: Clone,
+{
+    type Item = (K, V);
+    type IntoIter = IntoIter<K, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        // take self
+        IntoIter(self)
+    }
+}
 pub struct IntoIter<K, V>(LinearProbingHashST<K, V>);
 impl<K, V> Iterator for IntoIter<K, V>
 where

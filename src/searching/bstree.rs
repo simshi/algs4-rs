@@ -87,10 +87,6 @@ impl<K: Ord, V> BSTree<K, V> {
         self._keys_range(&self.root, &mut q, lo, hi);
         q
     }
-    pub fn into_iter(self) -> IntoIter<K, V> {
-        // take self
-        IntoIter(self)
-    }
     pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             stack: Vec::new(),
@@ -255,6 +251,15 @@ impl<K: Ord, V> BSTree<K, V> {
     }
 }
 
+impl<K: Ord, V> IntoIterator for BSTree<K, V> {
+    type Item = (K, V);
+    type IntoIter = IntoIter<K, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        // take self
+        IntoIter(self)
+    }
+}
 /// own the tree
 pub struct IntoIter<K, V>(BSTree<K, V>);
 
