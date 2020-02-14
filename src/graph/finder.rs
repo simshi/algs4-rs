@@ -9,7 +9,7 @@ pub struct Finder {
 impl Finder {
     pub fn new(g: &Graph, s: usize) -> Self {
         let mut f = Finder {
-            s: s,
+            s,
             marked: vec![false; g.v_size()],
             edge_to: vec![g.v_size(); g.v_size()],
         };

@@ -1,3 +1,4 @@
+#[derive(Default)]
 pub struct BinarySearchST<K, V> {
     keys: Vec<K>,
     values: Vec<V>,
@@ -29,7 +30,7 @@ impl<K: Eq + Ord, V> BinarySearchST<K, V> {
     }
 
     pub fn get(&self, key: &K) -> Option<&V> {
-        if self.keys.len() == 0 {
+        if self.keys.is_empty() {
             return None;
         }
 
@@ -87,7 +88,7 @@ impl<K: Eq + Ord, V> BinarySearchST<K, V> {
         }
     }
     pub fn delete_min(&mut self) {
-        if self.len() > 0 {
+        if !self.is_empty() {
             self.keys.remove(0);
             self.values.remove(0);
         }
@@ -122,7 +123,7 @@ impl<K: Eq + Ord, V> BinarySearchST<K, V> {
         while b < e {
             let m = b + (e - b) / 2;
 
-            if key <= &self.keys[m] {
+            if *key <= self.keys[m] {
                 e = m;
             } else {
                 b = m + 1;
@@ -138,7 +139,7 @@ impl<K: Eq + Ord, V> BinarySearchST<K, V> {
         while b < e {
             let m = b + (e - b) / 2;
 
-            if &self.keys[m] <= key {
+            if self.keys[m] <= *key {
                 b = m + 1;
             } else {
                 e = m;

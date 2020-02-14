@@ -8,7 +8,7 @@ pub struct SymbolGraph {
     g: Graph,
 }
 impl SymbolGraph {
-    pub fn new<'a, T>(edges: T) -> Self
+    pub fn new<T>(edges: T) -> Self
     where
         T: Iterator<Item = (String, String)>,
     {
@@ -41,11 +41,11 @@ impl SymbolGraph {
     pub fn e_size(&self) -> usize {
         self.g.e_size()
     }
-    pub fn contains(&self, key: &String) -> bool {
+    pub fn contains(&self, key: &str) -> bool {
         self.st.get(key).is_some()
     }
 
-    pub fn adj<'a>(&'a self, key: &String) -> Iter<'a> {
+    pub fn adj<'a>(&'a self, key: &str) -> Iter<'a> {
         let v = self.st.get(key).unwrap();
         Iter {
             iter: self.g.adj(*v).cloned().collect::<Vec<usize>>().into_iter(),
@@ -56,12 +56,12 @@ impl SymbolGraph {
 
 // private methods
 impl SymbolGraph {
-    fn get_or_add(st: &mut HashMap<String, usize>, keys: &mut Vec<String>, key: &String) -> usize {
+    fn get_or_add(st: &mut HashMap<String, usize>, keys: &mut Vec<String>, key: &str) -> usize {
         match st.get(key) {
             None => {
                 let i = keys.len();
-                st.insert(key.clone(), i);
-                keys.push(key.clone());
+                st.insert(key.to_string(), i);
+                keys.push(key.to_string());
                 i
             }
             Some(&v) => v,
@@ -87,7 +87,7 @@ mod tests {
     #[test]
     fn empty() {
         let edges = Vec::<(String, String)>::new();
-        let sg = SymbolGraph::new(edges.iter());
+        let sg = SymbolGraph::new(edges.into_iter());
         assert_eq!(0, sg.v_size());
         assert_eq!(0, sg.e_size());
     }
@@ -98,7 +98,7 @@ mod tests {
             (String::from("JFK"), String::from("MCO")),
             (String::from("JFK"), String::from("ATL")),
         ];
-        let sg = SymbolGraph::new(edges.iter());
+        let sg = SymbolGraph::new(edges.into_iter());
         assert_eq!(3, sg.v_size());
         assert_eq!(2, sg.e_size());
 

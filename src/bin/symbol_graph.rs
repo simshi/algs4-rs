@@ -19,7 +19,7 @@ impl EdgeReader {
         }
     }
 }
-impl Iterator for EdgeReader {
+impl Iterator for EdgeReader{
     type Item = (String, String);
 
     fn next(&mut self) -> Option<Self::Item> {

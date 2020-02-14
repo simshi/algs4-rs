@@ -18,7 +18,7 @@ impl Cycle {
     }
 
     pub fn has_cycle(&self) -> bool {
-        self.cycle.len() > 0
+        !self.cycle.is_empty()
     }
     pub fn cycle(&self) -> impl Iterator<Item = &usize> {
         self.cycle.iter()

@@ -8,7 +8,7 @@ pub struct Graph {
 impl Graph {
     pub fn new(v: usize) -> Self {
         Graph {
-            v: v,
+            v,
             e: 0,
             adj: vec![HashSet::new(); v],
         }

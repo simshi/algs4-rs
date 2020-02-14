@@ -25,6 +25,9 @@ where
     pub fn len(&self) -> usize {
         self.n
     }
+    pub fn is_empty(&self) -> bool {
+        self.n == 0
+    }
 
     pub fn contains(&self, key: &K) -> bool {
         self.get(key).is_some()

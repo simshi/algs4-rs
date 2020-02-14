@@ -54,7 +54,7 @@ fn partition<T: Ord + Clone>(arr: &mut [T], lo: usize, hi: usize) -> usize {
             arr[j] > pivot
         } {}
 
-        if i - 1 >= j {
+        if i > j {
             break;
         }
 

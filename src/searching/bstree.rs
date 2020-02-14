@@ -9,6 +9,7 @@ struct Node<K, V> {
     size: usize,
 }
 
+#[derive(Default)]
 pub struct BSTree<K, V> {
     root: List<K, V>,
 }
@@ -90,7 +91,7 @@ impl<K: Ord, V> BSTree<K, V> {
         // take self
         IntoIter(self)
     }
-    pub fn iter<'a>(&'a self) -> Iter<'a, K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             stack: Vec::new(),
             current: self.root.as_ref().map(|r| &**r),
@@ -157,8 +158,8 @@ impl<K: Ord, V> BSTree<K, V> {
     fn _put(&mut self, list: List<K, V>, key: K, value: V) -> Box<Node<K, V>> {
         match list {
             None => Box::new(Node {
-                key: key,
-                value: value,
+                key,
+                value,
                 left: None,
                 right: None,
                 size: 1,
@@ -197,9 +198,9 @@ impl<K: Ord, V> BSTree<K, V> {
     }
     fn _delete(&mut self, list: List<K, V>, key: &K) -> List<K, V> {
         list.and_then(|mut b| {
-            if key < &b.key {
+            if *key < b.key {
                 b.left = self._delete(b.left, key);
-            } else if key > &b.key {
+            } else if *key > b.key {
                 b.right = self._delete(b.right, key);
             } else {
                 if b.right.is_none() {
@@ -241,13 +242,13 @@ impl<K: Ord, V> BSTree<K, V> {
     }
     fn _keys_range<'a>(&self, list: &'a List<K, V>, q: &mut Vec<&'a K>, lo: &K, hi: &K) {
         if let Some(ref b) = list {
-            if lo < &b.key {
+            if *lo < b.key {
                 self._keys_range(&b.left, q, lo, hi);
             }
-            if lo <= &b.key && &b.key <= hi {
+            if *lo <= b.key && b.key <= *hi {
                 q.push(&b.key);
             }
-            if hi > &b.key {
+            if *hi > b.key {
                 self._keys_range(&b.right, q, lo, hi);
             }
         }

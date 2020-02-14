@@ -51,8 +51,8 @@ impl<K: Ord, V> Node<K, V> {
     fn new(key: K, value: V) -> Self {
         Node {
             color: Red,
-            key: key,
-            value: value,
+            key,
+            value,
             left: Tree::new(),
             right: Tree::new(),
             size: 1,
@@ -176,7 +176,7 @@ impl<K: Ord, V> RBTree<K, V> {
 // implement drop to avoid stack overflow
 impl<K: Ord, V> Drop for RBTree<K, V> {
     fn drop(&mut self) {
-        while self.len() > 0 {
+        while !self.is_empty() {
             self.delete_min();
         }
     }
@@ -238,8 +238,8 @@ impl<K: Ord, V> Tree<K, V> {
         match self.0 {
             None => true,
             Some(ref node) => {
-                min.map_or(true, |v| &node.key > v)
-                    && max.map_or(true, |v| &node.key < v)
+                min.map_or(true, |v| node.key > *v)
+                    && max.map_or(true, |v| node.key < *v)
                     && node.left.is_bst(min, Some(&node.key))
                     && node.right.is_bst(Some(&node.key), max)
             }
@@ -300,7 +300,7 @@ impl<K: Ord, V> Tree<K, V> {
             Greater => p.right.ceiling(key),
         })
     }
-    fn select<'a>(&'a self, i: usize) -> Option<&'a K> {
+    fn select(&self, i: usize) -> Option<&K> {
         self.0.as_ref().and_then(|b| {
             let ls = b.left.as_ref().map_or(0, |b| b.size);
             match i.cmp(&ls) {
@@ -505,22 +505,16 @@ impl<K: Ord, V> Tree<K, V> {
     }
 
     fn fix_self_with_right_child(b: &mut NodePtr<K, V>) -> (Tree<K, V>, bool) {
-        if b.color.is_red() {
-            // no impact on black-height
-            (b.right.take(), true)
-        } else if b.right.flip_red() {
-            // add one to black-height
+        // no impact on black-height or take place by flipped red child
+        if b.color.is_red() || b.right.flip_red() {
             (b.right.take(), true)
         } else {
             (b.right.take(), false)
         }
     }
     fn fix_self_with_left_child(b: &mut NodePtr<K, V>) -> (Tree<K, V>, bool) {
-        if b.color.is_red() {
-            // no impact on black-height
-            (b.left.take(), true)
-        } else if b.left.flip_red() {
-            // add one to black-height
+        // no impact on black-height or take place by flipped red child
+        if b.color.is_red() || b.left.flip_red() {
             (b.left.take(), true)
         } else {
             (b.left.take(), false)
