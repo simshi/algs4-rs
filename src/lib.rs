@@ -1,5 +1,5 @@
 extern crate rand;
 
-pub mod graph;
+pub mod graphs;
 pub mod searching;
 pub mod sorting;

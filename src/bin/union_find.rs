@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::io::{self, BufRead};
 
-use algs4_rs::graph::UnionFind;
+use algs4_rs::graphs::UnionFind;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();

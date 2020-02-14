@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
-use algs4_rs::graph::SymbolGraph;
+use algs4_rs::graphs::SymbolGraph;
 
 struct EdgeReader {
     lines: io::Lines<io::BufReader<File>>,
