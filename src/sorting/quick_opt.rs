@@ -42,23 +42,24 @@ fn partition<T: Ord + Clone>(arr: &mut [T], lo: usize, hi: usize) -> usize {
 
     // Hoare partition schema
     let mut i = lo;
-    let mut j = hi + 1;
+    let mut j = hi;
     loop {
-        // do-while in Rust...
-        while {
+        // do-while
+        i += 1;
+        while { arr[i] < pivot } {
             i += 1;
-            arr[i - 1] < pivot
-        } {}
-        while {
+        }
+        // do-while
+        j -= 1;
+        while { arr[j] > pivot } {
             j -= 1;
-            arr[j] > pivot
-        } {}
+        }
 
-        if i > j {
+        if i >= j {
             break;
         }
 
-        arr.swap(i - 1, j);
+        arr.swap(i, j);
     }
 
     j
@@ -109,7 +110,7 @@ mod tests {
 
     #[test]
     fn all_identical() {
-        let mut arr = [1, 1, 1, 1, 1];
+        let mut arr = vec![1; 64];
         quick_sort_opt(&mut arr);
         assert!(is_sorted(&arr));
     }

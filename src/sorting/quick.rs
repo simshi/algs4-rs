@@ -26,15 +26,15 @@ fn partition<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> usize {
     let mut i = lo;
     let mut j = hi + 1;
     loop {
-        // do-while in Rust...
-        while {
+        // do-while
+        i += 1;
+        while { i < hi && arr[i] < arr[lo] } {
             i += 1;
-            i < hi && arr[i] < arr[lo]
-        } {}
-        while {
+        }
+        j -= 1;
+        while { arr[j] > arr[lo] } {
             j -= 1;
-            arr[j] > arr[lo]
-        } {}
+        }
 
         if i >= j {
             break;
