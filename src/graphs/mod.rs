@@ -1,3 +1,4 @@
+mod basegraph;
 mod cc;
 mod cycle;
 mod digraph;
@@ -6,6 +7,7 @@ mod graph;
 mod symbol_graph;
 mod union_find;
 
+pub use self::basegraph::*;
 pub use self::cc::*;
 pub use self::cycle::*;
 pub use self::digraph::*;

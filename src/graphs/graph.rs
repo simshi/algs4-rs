@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use super::BaseGraph;
+
 pub struct Graph {
     v: usize,
     e: usize,
@@ -31,6 +33,30 @@ impl Graph {
     }
 
     pub fn adj(&self, v: usize) -> impl Iterator<Item = &usize> {
+        self.adj[v].iter()
+    }
+}
+
+impl<'a> BaseGraph<'a> for Graph {
+    type Iter = std::collections::hash_set::Iter<'a, usize>;
+
+    fn v_size(&self) -> usize {
+        self.v
+    }
+    fn e_size(&self) -> usize {
+        self.e
+    }
+    fn degree(&self, v: usize) -> usize {
+        self.adj[v].len()
+    }
+
+    fn add_edge(&mut self, v: usize, w: usize) {
+        self.adj[v].insert(w);
+        self.adj[w].insert(v);
+        self.e += 1;
+    }
+
+    fn adj(&'a self, v: usize) -> Self::Iter {
         self.adj[v].iter()
     }
 }
