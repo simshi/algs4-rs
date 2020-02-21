@@ -1,17 +1,17 @@
 use super::BaseGraph;
 
-pub struct Finder {
+pub struct Path {
     s: usize,
     marked: Vec<bool>,
     edge_to: Vec<usize>,
 }
 
-impl Finder {
+impl Path {
     pub fn new<'a, G>(g: &'a G, s: usize) -> Self
     where
         G: BaseGraph<'a>,
     {
-        let mut f = Finder {
+        let mut f = Path {
             s,
             marked: vec![false; g.v_size()],
             edge_to: vec![g.v_size(); g.v_size()],
@@ -44,7 +44,7 @@ impl Finder {
     }
 }
 
-impl Finder {
+impl Path {
     fn dfs<'a, G>(&mut self, g: &'a G, v: usize)
     where
         G: BaseGraph<'a>,
@@ -68,12 +68,12 @@ mod tests {
     #[test]
     fn empty() {
         let g = Graph::new(3);
-        let f = Finder::new(&g, 0);
+        let f = Path::new(&g, 0);
         assert!(!f.marked(1));
         assert!(!f.marked(2));
 
         let g = Digraph::new(3);
-        let f = Finder::new(&g, 0);
+        let f = Path::new(&g, 0);
         assert!(!f.marked(1));
         assert!(!f.marked(2));
     }
@@ -85,7 +85,7 @@ mod tests {
         g.add_edge(2, 0);
         g.add_edge(3, 4);
 
-        let f = Finder::new(&g, 0);
+        let f = Path::new(&g, 0);
         assert!(f.marked(0));
         assert!(f.marked(1));
         assert!(f.marked(2));
@@ -100,7 +100,7 @@ mod tests {
         g.add_edge(2, 0);
         g.add_edge(3, 4);
 
-        let f = Finder::new(&g, 0);
+        let f = Path::new(&g, 0);
         assert!(f.marked(0));
         assert!(f.marked(1));
         assert!(!f.marked(2));
@@ -117,14 +117,14 @@ mod tests {
 
         g.add_edge(1, 4);
 
-        let f = Finder::new(&g, 0);
+        let f = Path::new(&g, 0);
         let mut it = f.path_to(1);
         assert_eq!(0, it.next().unwrap());
         assert_eq!(1, it.next().unwrap());
         assert_eq!(None, it.next());
         assert_eq!(None, f.path_to(5).next());
 
-        let f = Finder::new(&g, 0);
+        let f = Path::new(&g, 0);
         let mut it = f.path_to(3);
         assert_eq!(0, it.next().unwrap());
         assert_eq!(1, it.next().unwrap());
@@ -133,7 +133,7 @@ mod tests {
         assert_eq!(None, it.next());
         assert_eq!(None, f.path_to(5).next());
 
-        let f = Finder::new(&g, 3);
+        let f = Path::new(&g, 3);
         let mut it = f.path_to(4);
         assert_eq!(3, it.next().unwrap());
         assert_eq!(2, it.next().unwrap());
@@ -152,14 +152,14 @@ mod tests {
 
         g.add_edge(1, 4);
 
-        let f = Finder::new(&g, 0);
+        let f = Path::new(&g, 0);
         let mut it = f.path_to(1);
         assert_eq!(0, it.next().unwrap());
         assert_eq!(1, it.next().unwrap());
         assert_eq!(None, it.next());
         assert_eq!(None, f.path_to(5).next());
 
-        let f = Finder::new(&g, 0);
+        let f = Path::new(&g, 0);
         let mut it = f.path_to(3);
         assert_eq!(0, it.next().unwrap());
         assert_eq!(1, it.next().unwrap());
@@ -168,7 +168,7 @@ mod tests {
         assert_eq!(None, it.next());
         assert_eq!(None, f.path_to(5).next());
 
-        let f = Finder::new(&g, 3);
+        let f = Path::new(&g, 3);
         let mut it = f.path_to(4);
         assert_eq!(None, it.next());
         assert_eq!(None, f.path_to(5).next());
