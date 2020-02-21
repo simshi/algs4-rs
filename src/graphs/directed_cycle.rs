@@ -1,18 +1,19 @@
-use super::BaseGraph;
-use super::Graph;
+use super::{BaseGraph, Digraph};
 
 // connected component
-pub struct Cycle {
+pub struct DirectedCycle {
     marked: Vec<bool>,
     edge_to: Vec<usize>,
     cycle: Vec<usize>,
+    on_stack: Vec<bool>,
 }
-impl Cycle {
-    pub fn new(g: &Graph) -> Self {
-        let mut c = Cycle {
+impl DirectedCycle {
+    pub fn new(g: &Digraph) -> Self {
+        let mut c = DirectedCycle {
             marked: vec![false; g.v_size()],
             edge_to: vec![g.v_size(); g.v_size()],
             cycle: Vec::new(),
+            on_stack: vec![false; g.v_size()],
         };
         c.init(g);
         c
@@ -27,26 +28,25 @@ impl Cycle {
 }
 
 // private methods
-impl Cycle {
-    fn init(&mut self, g: &Graph) {
+impl DirectedCycle {
+    fn init(&mut self, g: &Digraph) {
         for v in 0..g.v_size() {
             if !self.marked[v] {
-                self.dfs(g, g.v_size(), v);
+                self.dfs(g, v);
             }
         }
     }
 
-    fn dfs(&mut self, g: &Graph, p: usize, v: usize) {
+    fn dfs(&mut self, g: &Digraph, v: usize) {
         self.marked[v] = true;
+        self.on_stack[v] = true;
         for &w in g.adj(v) {
             if self.has_cycle() {
                 return;
-            }
-
-            if !self.marked[w] {
+            } else if !self.marked[w] {
                 self.edge_to[w] = v;
-                self.dfs(g, v, w)
-            } else if w != p {
+                self.dfs(g, w)
+            } else if self.on_stack[w] {
                 self.cycle.push(w);
                 let mut x = v;
                 while x != w {
@@ -54,8 +54,10 @@ impl Cycle {
                     x = self.edge_to[x];
                 }
                 self.cycle.push(w);
+                self.cycle.reverse();
             }
         }
+        self.on_stack[v] = false;
     }
 }
 
@@ -65,8 +67,8 @@ mod tests {
 
     #[test]
     fn empty() {
-        let g = Graph::new(3);
-        let c = Cycle::new(&g);
+        let g = Digraph::new(3);
+        let c = DirectedCycle::new(&g);
 
         assert!(!c.has_cycle());
         let mut it = c.cycle();
@@ -75,41 +77,36 @@ mod tests {
 
     #[test]
     fn cycled() {
-        let mut g = Graph::new(5);
+        let mut g = Digraph::new(5);
         g.add_edge(0, 1);
         g.add_edge(1, 2);
-        g.add_edge(3, 2);
+        g.add_edge(2, 3);
         g.add_edge(3, 1);
 
-        let c = Cycle::new(&g);
+        let c = DirectedCycle::new(&g);
         assert!(c.has_cycle());
         let a = c.cycle().collect::<Vec<_>>();
-        if a[1] == &3 {
-            assert_eq!([&1, &3, &2, &1], &a[..]);
-        } else {
-            assert_eq!([&1, &2, &3, &1], &a[..]);
-        }
+        assert_eq!([&1, &2, &3, &1], &a[..]);
     }
 
     #[test]
     fn self_loop() {
-        let mut g = Graph::new(1);
+        let mut g = Digraph::new(1);
         g.add_edge(0, 0);
 
-        let c = Cycle::new(&g);
+        let c = DirectedCycle::new(&g);
         assert!(c.has_cycle());
         let a = c.cycle().collect::<Vec<_>>();
         assert_eq!([&0, &0], &a[..]);
     }
 
     #[test]
-    #[ignore] // not considerated!
     fn parallel_edge() {
-        let mut g = Graph::new(2);
+        let mut g = Digraph::new(2);
         g.add_edge(0, 1);
         g.add_edge(1, 0);
 
-        let c = Cycle::new(&g);
+        let c = DirectedCycle::new(&g);
         assert!(c.has_cycle());
         let a = c.cycle().collect::<Vec<_>>();
         assert_eq!([&0, &1, &0], &a[..]);
