@@ -15,26 +15,6 @@ impl Graph {
             adj: vec![HashSet::new(); v],
         }
     }
-
-    pub fn v_size(&self) -> usize {
-        self.v
-    }
-    pub fn e_size(&self) -> usize {
-        self.e
-    }
-    pub fn degree(&self, v: usize) -> usize {
-        self.adj[v].len()
-    }
-
-    pub fn add_edge(&mut self, v: usize, w: usize) {
-        self.adj[v].insert(w);
-        self.adj[w].insert(v);
-        self.e += 1;
-    }
-
-    pub fn adj(&self, v: usize) -> impl Iterator<Item = &usize> {
-        self.adj[v].iter()
-    }
 }
 
 impl<'a> BaseGraph<'a> for Graph {

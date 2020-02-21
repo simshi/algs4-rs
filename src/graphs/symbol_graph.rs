@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use super::BaseGraph;
 use super::Graph;
 
 pub struct SymbolGraph {

@@ -1,4 +1,4 @@
-use super::Graph;
+use super::{BaseGraph, Graph};
 
 // connected component
 pub struct CC {
@@ -8,7 +8,7 @@ pub struct CC {
     sizes: Vec<usize>,
 }
 impl CC {
-    pub fn new(g: &Graph) -> Self {
+    pub fn new<'a>(g: &'a Graph) -> Self {
         let mut c = CC {
             count_: 0,
             marked: vec![false; g.v_size()],
@@ -35,7 +35,7 @@ impl CC {
 
 // private methods
 impl CC {
-    fn init(&mut self, g: &Graph) {
+    fn init<'a>(&mut self, g: &'a Graph) {
         for v in 0..g.v_size() {
             if !self.marked[v] {
                 self.dfs(g, v);
@@ -44,7 +44,7 @@ impl CC {
         }
     }
 
-    fn dfs(&mut self, g: &Graph, v: usize) {
+    fn dfs<'a>(&mut self, g: &'a Graph, v: usize) {
         self.marked[v] = true;
         self.ids[v] = self.count_;
         self.sizes[self.count_] += 1;

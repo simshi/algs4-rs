@@ -1,3 +1,4 @@
+use super::BaseGraph;
 use super::Graph;
 
 // connected component
