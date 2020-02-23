@@ -25,6 +25,16 @@ impl Digraph {
 
         g
     }
+
+    pub fn pre_order(&self) -> PreOrderIter {
+        PreOrderIter::new(&self)
+    }
+    pub fn post_order(&self) -> PostOrderIter {
+        PostOrderIter::new(&self)
+    }
+    pub fn topo_order(&self) -> TopoOrderIter {
+        TopoOrderIter::new(&self)
+    }
 }
 
 impl<'a> BaseGraph<'a> for Digraph {
@@ -47,6 +57,138 @@ impl<'a> BaseGraph<'a> for Digraph {
 
     fn adj(&'a self, v: usize) -> Self::Iter {
         self.adj[v].iter()
+    }
+}
+
+pub struct PreOrderIter<'a> {
+    g: &'a Digraph,
+    v: usize,
+    marked: Vec<bool>,
+    stack: Vec<usize>,
+}
+impl<'a> PreOrderIter<'a> {
+    pub fn new(g: &'a Digraph) -> Self {
+        PreOrderIter {
+            g,
+            v: 0,
+            marked: vec![false; g.v_size()],
+            stack: Vec::new(),
+        }
+    }
+}
+impl Iterator for PreOrderIter<'_> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.stack.len() == 0 {
+            while self.v < self.g.v_size() {
+                if !self.marked[self.v] {
+                    self.stack.push(self.v);
+                    break;
+                }
+                self.v += 1;
+            }
+        }
+
+        self.stack.pop().map(|v| {
+            self.marked[v] = true;
+            for w in self.g.adj(v) {
+                if !self.marked[*w] {
+                    self.stack.push(*w);
+                }
+            }
+
+            v
+        })
+    }
+}
+
+pub struct PostOrderIter<'a> {
+    g: &'a Digraph,
+    v: usize,
+    marked: Vec<bool>,
+    stack: Vec<usize>,
+}
+impl<'a> PostOrderIter<'a> {
+    pub fn new(g: &'a Digraph) -> Self {
+        PostOrderIter {
+            g,
+            v: 0,
+            marked: vec![false; g.v_size()],
+            stack: Vec::new(),
+        }
+    }
+
+    fn dfs(&mut self, v: usize) {
+        self.marked[v] = true;
+        self.stack.push(v);
+        for &w in self.g.adj(v) {
+            if !self.marked[w] {
+                self.dfs(w);
+            }
+        }
+    }
+}
+impl Iterator for PostOrderIter<'_> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.stack.len() == 0 {
+            while self.v < self.g.v_size() {
+                if !self.marked[self.v] {
+                    self.dfs(self.v);
+                    break;
+                }
+                self.v += 1;
+            }
+        }
+
+        self.stack.pop()
+    }
+}
+
+pub struct TopoOrderIter<'a> {
+    g: &'a Digraph,
+    v: usize,
+    marked: Vec<bool>,
+    stack: Vec<usize>,
+}
+impl<'a> TopoOrderIter<'a> {
+    pub fn new(g: &'a Digraph) -> Self {
+        TopoOrderIter {
+            g,
+            v: 0,
+            marked: vec![false; g.v_size()],
+            stack: Vec::new(),
+        }
+    }
+
+    fn dfs(&mut self, v: usize) {
+        self.marked[v] = true;
+        self.stack.push(v);
+        for &w in self.g.adj(v) {
+            if !self.marked[w] {
+                self.dfs(w);
+            }
+        }
+    }
+}
+impl Iterator for TopoOrderIter<'_> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.stack.len() == 0 {
+            while self.v < self.g.v_size() {
+                if !self.marked[self.v] {
+                    self.dfs(self.v);
+                    self.stack.reverse();
+                    break;
+                }
+                self.v += 1;
+            }
+        }
+
+        self.stack.pop()
     }
 }
 
@@ -135,5 +277,62 @@ mod tests {
         let mut a = g.adj(4).cloned().collect::<Vec<_>>();
         a.sort_unstable();
         assert_eq!(vec![3], a);
+    }
+
+    #[test]
+    fn pre_order() {
+        let mut g = Digraph::new(6);
+        g.add_edge(0, 4);
+        g.add_edge(4, 5);
+        g.add_edge(4, 3);
+        g.add_edge(3, 1);
+
+        let r = g.pre_order().collect::<Vec<_>>();
+        assert_eq!(6, r.len());
+        if r[2] == 5 {
+            assert_eq!(vec![0, 4, 5, 3, 1, 2], r);
+        } else {
+            assert_eq!(vec![0, 4, 3, 1, 5, 2], r);
+        }
+    }
+
+    #[test]
+    fn post_order() {
+        let mut g = Digraph::new(9);
+        g.add_edge(0, 1);
+        g.add_edge(1, 2);
+        g.add_edge(1, 3);
+        g.add_edge(3, 4);
+
+        g.add_edge(5, 6);
+        g.add_edge(6, 7);
+
+        let r = g.post_order().collect::<Vec<_>>();
+        assert_eq!(9, r.len());
+        if r[0] == 2 {
+            assert_eq!(vec![2, 4, 3, 1, 0, 7, 6, 5, 8], r);
+        } else {
+            assert_eq!(vec![4, 3, 2, 1, 0, 7, 6, 5, 8], r);
+        }
+    }
+
+    #[test]
+    fn topo_order() {
+        let mut g = Digraph::new(9);
+        g.add_edge(0, 1);
+        g.add_edge(1, 2);
+        g.add_edge(1, 3);
+        g.add_edge(3, 4);
+
+        g.add_edge(5, 6);
+        g.add_edge(6, 7);
+
+        let r = g.topo_order().collect::<Vec<_>>();
+        assert_eq!(9, r.len());
+        if r[2] == 2 {
+            assert_eq!(vec![0, 1, 2, 3, 4, 5, 6, 7, 8], r);
+        } else {
+            assert_eq!(vec![0, 1, 3, 4, 2, 5, 6, 7, 8], r);
+        }
     }
 }
