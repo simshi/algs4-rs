@@ -103,92 +103,66 @@ impl Iterator for PreOrderIter<'_> {
     }
 }
 
-pub struct PostOrderIter<'a> {
-    g: &'a Digraph,
-    v: usize,
-    marked: Vec<bool>,
-    stack: Vec<usize>,
+// post_order helper functions
+fn post_order(order: &mut Vec<usize>, g: &Digraph) {
+    let mut marked = vec![false; g.v_size()];
+    for v in 0..g.v_size() {
+        post_order_dfs(order, g, &mut marked, v);
+    }
 }
-impl<'a> PostOrderIter<'a> {
-    pub fn new(g: &'a Digraph) -> Self {
-        PostOrderIter {
-            g,
-            v: 0,
-            marked: vec![false; g.v_size()],
-            stack: Vec::new(),
-        }
+fn post_order_dfs(order: &mut Vec<usize>, g: &Digraph, marked: &mut Vec<bool>, v: usize) {
+    if marked[v] {
+        return;
     }
 
-    fn dfs(&mut self, v: usize) {
-        self.marked[v] = true;
-        self.stack.push(v);
-        for &w in self.g.adj(v) {
-            if !self.marked[w] {
-                self.dfs(w);
-            }
-        }
+    marked[v] = true;
+    for &w in g.adj(v) {
+        post_order_dfs(order, g, marked, w);
+    }
+    order.push(v);
+}
+
+pub struct PostOrderIter {
+    order: Vec<usize>,
+    i: usize,
+}
+impl PostOrderIter {
+    pub fn new(g: &Digraph) -> Self {
+        let mut order = Vec::new();
+        post_order(&mut order, g);
+
+        PostOrderIter { order, i: 0 }
     }
 }
-impl Iterator for PostOrderIter<'_> {
+impl Iterator for PostOrderIter {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.stack.len() == 0 {
-            while self.v < self.g.v_size() {
-                if !self.marked[self.v] {
-                    self.dfs(self.v);
-                    break;
-                }
-                self.v += 1;
-            }
-        }
-
-        self.stack.pop()
-    }
-}
-
-pub struct TopoOrderIter<'a> {
-    g: &'a Digraph,
-    v: usize,
-    marked: Vec<bool>,
-    stack: Vec<usize>,
-}
-impl<'a> TopoOrderIter<'a> {
-    pub fn new(g: &'a Digraph) -> Self {
-        TopoOrderIter {
-            g,
-            v: 0,
-            marked: vec![false; g.v_size()],
-            stack: Vec::new(),
-        }
-    }
-
-    fn dfs(&mut self, v: usize) {
-        self.marked[v] = true;
-        self.stack.push(v);
-        for &w in self.g.adj(v) {
-            if !self.marked[w] {
-                self.dfs(w);
-            }
+        if self.i < self.order.len() {
+            self.i += 1;
+            Some(self.order[self.i - 1])
+        } else {
+            None
         }
     }
 }
-impl Iterator for TopoOrderIter<'_> {
+
+pub struct TopoOrderIter {
+    order: Vec<usize>,
+}
+impl TopoOrderIter {
+    pub fn new(g: &Digraph) -> Self {
+        let mut order = Vec::new();
+        post_order(&mut order, g);
+
+        TopoOrderIter { order }
+    }
+}
+impl Iterator for TopoOrderIter {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.stack.len() == 0 {
-            while self.v < self.g.v_size() {
-                if !self.marked[self.v] {
-                    self.dfs(self.v);
-                    self.stack.reverse();
-                    break;
-                }
-                self.v += 1;
-            }
-        }
-
-        self.stack.pop()
+        self.order.pop()
     }
 }
 
@@ -302,17 +276,24 @@ mod tests {
         g.add_edge(0, 1);
         g.add_edge(1, 2);
         g.add_edge(1, 3);
-        g.add_edge(3, 4);
+        g.add_edge(1, 4);
+        g.add_edge(3, 2);
+        g.add_edge(2, 5);
 
-        g.add_edge(5, 6);
-        g.add_edge(6, 7);
+        g.add_edge(6, 5);
+
+        g.add_edge(8, 7);
 
         let r = g.post_order().collect::<Vec<_>>();
         assert_eq!(9, r.len());
-        if r[0] == 2 {
-            assert_eq!(vec![2, 4, 3, 1, 0, 7, 6, 5, 8], r);
+        if r[0] == 5 {
+            if r[2] == 3 {
+                assert_eq!(vec![5, 2, 3, 4, 1, 0, 6, 7, 8], r);
+            } else {
+                assert_eq!(vec![5, 2, 4, 3, 1, 0, 6, 7, 8], r);
+            }
         } else {
-            assert_eq!(vec![4, 3, 2, 1, 0, 7, 6, 5, 8], r);
+            assert_eq!(vec![4, 5, 2, 3, 1, 0, 6, 7, 8], r);
         }
     }
 
@@ -329,10 +310,10 @@ mod tests {
 
         let r = g.topo_order().collect::<Vec<_>>();
         assert_eq!(9, r.len());
-        if r[2] == 2 {
-            assert_eq!(vec![0, 1, 2, 3, 4, 5, 6, 7, 8], r);
+        if r[6] == 2 {
+            assert_eq!(vec![8, 5, 6, 7, 0, 1, 2, 3, 4], r);
         } else {
-            assert_eq!(vec![0, 1, 3, 4, 2, 5, 6, 7, 8], r);
+            assert_eq!(vec![8, 5, 6, 7, 0, 1, 3, 4, 2], r);
         }
     }
 }
