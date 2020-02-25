@@ -5,6 +5,7 @@ mod digraph;
 mod directed_cycle;
 mod graph;
 mod path;
+mod scc;
 mod symbol_graph;
 mod union_find;
 
@@ -15,5 +16,6 @@ pub use self::digraph::*;
 pub use self::directed_cycle::*;
 pub use self::graph::*;
 pub use self::path::*;
+pub use self::scc::*;
 pub use self::symbol_graph::*;
 pub use self::union_find::*;

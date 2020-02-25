@@ -32,6 +32,7 @@ impl Digraph {
     pub fn post_order(&self) -> PostOrderIter {
         PostOrderIter::new(&self)
     }
+    // valid if and only if it's a DAG
     pub fn topo_order(&self) -> TopoOrderIter {
         TopoOrderIter::new(&self)
     }
