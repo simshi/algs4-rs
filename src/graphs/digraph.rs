@@ -81,7 +81,7 @@ impl Iterator for PreOrderIter<'_> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.stack.len() == 0 {
+        if self.stack.is_empty() {
             while self.v < self.g.v_size() {
                 if !self.marked[self.v] {
                     self.stack.push(self.v);

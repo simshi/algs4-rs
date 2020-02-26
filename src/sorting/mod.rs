@@ -1,5 +1,6 @@
 mod heap;
 mod heap_opt;
+mod index_min_pq;
 mod insertion;
 mod max_pq;
 mod merge;
@@ -12,6 +13,7 @@ mod shell;
 
 pub use self::heap::*;
 pub use self::heap_opt::*;
+pub use self::index_min_pq::*;
 pub use self::insertion::*;
 pub use self::max_pq::*;
 pub use self::merge::*;
