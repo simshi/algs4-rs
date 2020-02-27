@@ -20,6 +20,13 @@ impl<E: PartialOrd + Clone + Default> IndexMinPQ<E> {
     pub fn is_empty(&self) -> bool {
         self.pq.len() <= 1
     }
+    pub fn get(&self, i: usize) -> Option<&E> {
+        if self.pos[i] != 0 {
+            Some(&self.elements[i])
+        } else {
+            None
+        }
+    }
 
     pub fn pop(&mut self) -> Option<(usize, E)> {
         if !self.is_empty() {
