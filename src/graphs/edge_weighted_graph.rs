@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Edge {
 	v: usize,
@@ -23,6 +25,11 @@ impl Edge {
 		self.weight
 	}
 }
+impl PartialOrd for Edge {
+	fn partial_cmp(&self, other: &Edge) -> Option<Ordering> {
+		self.weight.partial_cmp(&other.weight)
+	}
+}
 
 pub struct EdgeWeightedGraph {
 	v: usize,
@@ -38,7 +45,9 @@ impl EdgeWeightedGraph {
 		}
 	}
 
-	// pub fn edges(&self) -> impl Iterator<Item = &Edge> { }
+	pub fn edges(&self) -> impl Iterator<Item = &Edge> {
+		self.adj.iter().flatten()
+	}
 
 	pub fn add_edge(&mut self, e: &Edge) {
 		let v = e.either();

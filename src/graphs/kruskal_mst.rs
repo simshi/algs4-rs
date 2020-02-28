@@ -1,72 +1,48 @@
-use super::super::sorting::IndexMinPQ;
+use super::super::sorting::MinPQ;
 use super::edge_weighted_graph::{Edge, EdgeWeightedGraph};
+use super::union_find::UnionFind;
 
 // minimum spanning tree by Eager Prim algorithm
-pub struct PrimMST {
-	edge_to: Vec<Option<Edge>>,
-	weight_: f64,
+pub struct KruskalMST {
+	edges_: Vec<Edge>,
+	weight: f64,
 }
 
-impl PrimMST {
+impl KruskalMST {
 	pub fn new(g: &EdgeWeightedGraph) -> Self {
-		let mut t = PrimMST {
-			edge_to: vec![None; g.v_size()],
-			weight_: 0.0,
+		let mut t = KruskalMST {
+			edges_: Vec::new(),
+			weight: 0.0,
 		};
-		// eager approach, at most V-1 vertices in PQ
-		let mut pq = IndexMinPQ::new(g.v_size());
-		let mut marked = vec![false; g.v_size()];
-		// handle forest
-		for v in 0..g.v_size() {
-			t.prim(v, g, &mut pq, &mut marked);
-		}
-		t.weight_ = t.edges().map(|e| e.weight()).sum();
+		t.kruskal(g);
+		t.weight = t.edges().map(|e| e.weight()).sum();
 
 		t
 	}
 
 	pub fn weight(&self) -> f64 {
-		self.weight_
+		self.weight
 	}
-	pub fn edges(&self) -> impl Iterator<Item = Edge> + '_ {
-		self.edge_to.iter().filter_map(|e| *e)
-	}
-
-	fn prim(
-		&mut self,
-		v: usize,
-		g: &EdgeWeightedGraph,
-		pq: &mut IndexMinPQ<f64>,
-		marked: &mut Vec<bool>,
-	) {
-		if marked[v] {
-			return;
-		}
-		pq.upsert(v, 0.0);
-		while let Some((v, _)) = pq.pop() {
-			self.scan(v, g, pq, marked);
-		}
+	pub fn edges(&self) -> impl Iterator<Item = &Edge> {
+		self.edges_.iter()
 	}
 
-	fn scan(
-		&mut self,
-		v: usize,
-		g: &EdgeWeightedGraph,
-		pq: &mut IndexMinPQ<f64>,
-		marked: &mut Vec<bool>,
-	) {
-		marked[v] = true;
-		for e in g.adj(v) {
+	fn kruskal(&mut self, g: &EdgeWeightedGraph) {
+		let mut pq = MinPQ::new();
+		for e in g.edges() {
+			pq.push(e);
+		}
+		let mut uf = UnionFind::new(g.v_size());
+		while let Some(e) = pq.pop() {
+			let v = e.either();
 			let w = e.other(v);
-			if marked[w] {
+			if uf.connected(v, w).unwrap() {
 				continue;
 			}
-
-			// update w to the cheaper edge
-			let cheaper = pq.get(w).map_or(true, |&w| e.weight() < w);
-			if cheaper {
-				self.edge_to[w] = Some(e.clone());
-				pq.upsert(w, e.weight());
+			uf.union(v, w);
+			self.edges_.push(e.clone());
+			if self.edges_.len() == g.v_size() - 1 {
+				break;
 			}
 		}
 	}
@@ -81,7 +57,7 @@ mod tests {
 		let g = EdgeWeightedGraph::new(0);
 		assert_eq!(0, g.v_size());
 
-		let t = PrimMST::new(&g);
+		let t = KruskalMST::new(&g);
 		assert_eq!(0, (t.weight() * 1000.0) as isize);
 		assert_eq!(None, t.edges().next());
 	}
@@ -91,8 +67,8 @@ mod tests {
 		let mut g = EdgeWeightedGraph::new(2);
 		g.add_edge(&Edge::new(0, 1, 0.5));
 
-		let t = PrimMST::new(&g);
-		assert_eq!(5, (t.weight() * 10.0) as isize);
+		let t = KruskalMST::new(&g);
+		assert_eq!(5, (t.weight() * 10.0).round() as isize);
 		let edges = t.edges().collect::<Vec<_>>();
 		assert_eq!(1, edges.len());
 
@@ -121,15 +97,20 @@ mod tests {
 		g.add_edge(&Edge::new(6, 2, 0.40));
 		g.add_edge(&Edge::new(6, 4, 0.93));
 
-		let t = PrimMST::new(&g);
+		let t = KruskalMST::new(&g);
 
-		let paths = t
+		let mut paths = t
 			.edges()
-			.enumerate()
-			.map(|(i, e)| e.other(i + 1))
+			.map(|e| {
+				let v = e.either();
+				(v, e.other(v))
+			})
 			.collect::<Vec<_>>();
-		// i.e. 1->7, 2->0, 3->2, ..., 7->0
-		assert_eq!(vec![7, 0, 2, 5, 7, 2, 0], paths);
+		paths.sort();
+		assert_eq!(
+			vec![(0, 2), (0, 7), (1, 7), (2, 3), (4, 5), (5, 7), (6, 2)],
+			paths
+		);
 
 		assert_eq!(181, (t.weight() * 100.0).round() as isize);
 	}
