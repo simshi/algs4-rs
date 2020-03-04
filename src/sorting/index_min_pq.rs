@@ -27,6 +27,16 @@ impl<E: PartialOrd + Clone + Default> IndexMinPQ<E> {
             None
         }
     }
+    pub fn remove(&mut self, i: usize) {
+        let pos = self.pos[i];
+        if pos == 0 {
+            return;
+        }
+
+        self.pq.swap_remove(pos);
+        self.sink(pos);
+        self.pos[i] = 0;
+    }
 
     pub fn pop(&mut self) -> Option<(usize, E)> {
         if !self.is_empty() {
@@ -40,8 +50,15 @@ impl<E: PartialOrd + Clone + Default> IndexMinPQ<E> {
         }
     }
 
-    pub fn upsert(&mut self, i: usize, e: E) {
-        if self.pos[i] != 0 {
+    pub fn upsert(&mut self, i: usize, e: E) -> bool {
+        if self.pos[i] == 0 {
+            self.pos[i] = self.pq.len();
+            self.elements[i] = e;
+            self.pq.push(i);
+            self.swim(self.len() - 1);
+
+            true
+        } else {
             let old = self.elements[i].clone();
             self.elements[i] = e.clone();
             if e < old {
@@ -49,11 +66,8 @@ impl<E: PartialOrd + Clone + Default> IndexMinPQ<E> {
             } else if old < e {
                 self.sink(self.pos[i]);
             }
-        } else {
-            self.pos[i] = self.pq.len();
-            self.elements[i] = e;
-            self.pq.push(i);
-            self.swim(self.len() - 1);
+
+            false
         }
     }
 
