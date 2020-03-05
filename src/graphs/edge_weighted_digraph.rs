@@ -57,6 +57,53 @@ impl EdgeWeightedDigraph {
 	pub fn adj(&self, v: usize) -> impl Iterator<Item = &DirectedEdge> {
 		self.adj[v].iter()
 	}
+	// valid if and only if it's acyclic
+	pub fn topo_order(&self) -> TopoOrderIter {
+		TopoOrderIter::new(&self)
+	}
+}
+
+pub struct TopoOrderIter {
+	order: Vec<usize>,
+}
+impl TopoOrderIter {
+	pub fn new(g: &EdgeWeightedDigraph) -> Self {
+		let mut order = Vec::new();
+		post_order(&mut order, g);
+
+		TopoOrderIter { order }
+	}
+}
+impl Iterator for TopoOrderIter {
+	type Item = usize;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		self.order.pop()
+	}
+}
+
+// post_order helper functions
+fn post_order(order: &mut Vec<usize>, g: &EdgeWeightedDigraph) {
+	let mut marked = vec![false; g.v_size()];
+	for v in 0..g.v_size() {
+		post_order_dfs(order, g, &mut marked, v);
+	}
+}
+fn post_order_dfs(
+	order: &mut Vec<usize>,
+	g: &EdgeWeightedDigraph,
+	marked: &mut Vec<bool>,
+	v: usize,
+) {
+	if marked[v] {
+		return;
+	}
+
+	marked[v] = true;
+	for &e in g.adj(v) {
+		post_order_dfs(order, g, marked, e.to());
+	}
+	order.push(v);
 }
 
 #[cfg(test)]
@@ -87,7 +134,6 @@ mod tests {
 	#[test]
 	fn multiple_edges() {
 		let mut g = EdgeWeightedDigraph::new(8);
-		assert_eq!(8, g.v_size());
 		g.add_edge(&DirectedEdge::new(0, 1, 0.5));
 		g.add_edge(&DirectedEdge::new(0, 2, 0.26));
 		g.add_edge(&DirectedEdge::new(0, 4, 0.38));
@@ -115,5 +161,22 @@ mod tests {
 
 		let a = g.adj(5).next();
 		assert_eq!(None, a);
+	}
+
+	#[test]
+	fn topo_order() {
+		let ewdag = vec![(0, 1), (1, 2), (1, 3), (3, 4)];
+		let mut g = EdgeWeightedDigraph::new(5);
+		for e in ewdag {
+			g.add_edge(&DirectedEdge::new(e.0, e.1, 0.1));
+		}
+
+		let r = g.topo_order().collect::<Vec<_>>();
+		assert_eq!(5, r.len());
+		if r[2] == 2 {
+			assert_eq!(vec![0, 1, 2, 3, 4], r);
+		} else {
+			assert_eq!(vec![0, 1, 3, 4, 2], r);
+		}
 	}
 }
