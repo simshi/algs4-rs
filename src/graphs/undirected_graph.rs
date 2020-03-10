@@ -3,13 +3,13 @@ use super::edge::*;
 
 use std::collections::HashSet;
 
-pub struct DiGraph {
+pub struct UndirectedGraph {
 	e: usize,
 	adj: Vec<HashSet<usize>>,
 }
-impl DiGraph {
+impl UndirectedGraph {
 	pub fn new(v: usize) -> Self {
-		DiGraph {
+		UndirectedGraph {
 			e: 0,
 			adj: vec![HashSet::new(); v],
 		}
@@ -17,11 +17,12 @@ impl DiGraph {
 
 	pub fn add_edge(&mut self, v: usize, w: usize) {
 		self.adj[v].insert(w);
+		self.adj[w].insert(v);
 		self.e += 1;
 	}
 }
-impl Graph for DiGraph {
-	type Edge = DirectedEdge;
+impl Graph for UndirectedGraph {
+	type Edge = UndirectedEdge;
 
 	fn v_size(&self) -> usize {
 		self.adj.len()

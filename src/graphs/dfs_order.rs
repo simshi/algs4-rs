@@ -1,18 +1,5 @@
 use super::base::*;
 
-pub fn pre_order<'a, G, E>(g: &'a G) -> PreOrderIter<'a, G>
-where
-	E: Directed,
-	G: Graph<Edge = E>,
-{
-	PreOrderIter {
-		g,
-		v: 0,
-		marked: vec![false; g.v_size()],
-		stack: Vec::new(),
-	}
-}
-
 pub struct PreOrderIter<'a, G> {
 	g: &'a G,
 	v: usize,
@@ -74,7 +61,7 @@ mod tests {
 	#[test]
 	fn empty() {
 		let g = DiGraph::new(1);
-		assert_eq!(vec![0], pre_order(&g).collect::<Vec<_>>());
+		assert_eq!(vec![0], g.pre_order().collect::<Vec<_>>());
 	}
 
 	#[test]
@@ -85,7 +72,7 @@ mod tests {
 		g.add_edge(4, 3);
 		g.add_edge(3, 1);
 
-		let r = pre_order(&g).collect::<Vec<_>>();
+		let r = g.pre_order().collect::<Vec<_>>();
 		assert_eq!(6, r.len());
 		if r[2] == 5 {
 			assert_eq!(vec![0, 4, 5, 3, 1, 2], r);

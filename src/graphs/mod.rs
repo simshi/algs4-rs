@@ -1,9 +1,11 @@
 pub mod base;
-pub mod edge;
 pub mod dfs_order;
+pub mod edge;
 
 mod directed_graph;
+mod undirected_graph;
 pub use self::directed_graph::*;
+pub use self::undirected_graph::*;
 
 mod acyclic_lp;
 mod acyclic_sp;
@@ -12,7 +14,6 @@ mod cc;
 mod cycle;
 mod digraph;
 mod dijkstra_sp;
-mod directed_cycle;
 mod edge_weighted_digraph;
 mod edge_weighted_graph;
 mod graph;
@@ -30,7 +31,6 @@ pub use self::cc::*;
 pub use self::cycle::*;
 pub use self::digraph::*;
 pub use self::dijkstra_sp::*;
-pub use self::directed_cycle::*;
 pub use self::edge_weighted_digraph::*;
 pub use self::edge_weighted_graph::*;
 pub use self::graph::*;

@@ -1,4 +1,4 @@
-use super::BaseGraph;
+use super::base::*;
 
 pub struct Path {
     s: usize,
@@ -7,9 +7,10 @@ pub struct Path {
 }
 
 impl Path {
-    pub fn new<'a, G>(g: &'a G, s: usize) -> Self
+    pub fn new<'a, G, E>(g: &'a G, s: usize) -> Self
     where
-        G: BaseGraph<'a>,
+        E: Edge,
+        G: Graph<Edge = E>,
     {
         let mut f = Path {
             s,
@@ -45,15 +46,16 @@ impl Path {
 }
 
 impl Path {
-    fn dfs<'a, G>(&mut self, g: &'a G, v: usize)
+    fn dfs<'a, G, E>(&mut self, g: &'a G, v: usize)
     where
-        G: BaseGraph<'a>,
+        E: Edge,
+        G: Graph<Edge = E>,
     {
         self.marked[v] = true;
-        for w in g.adj(v) {
-            if !self.marked[*w] {
-                self.edge_to[*w] = v;
-                self.dfs(g, *w);
+        for e in g.adj(v) {
+            if !self.marked[e.other(v)] {
+                self.edge_to[e.other(v)] = v;
+                self.dfs(g, e.other(v));
             }
         }
     }
@@ -61,26 +63,26 @@ impl Path {
 
 #[cfg(test)]
 mod tests {
-    use super::super::Digraph;
-    use super::super::Graph;
+    use super::super::DiGraph;
+    use super::super::UndirectedGraph;
     use super::*;
 
     #[test]
     fn empty() {
-        let g = Graph::new(3);
+        let g = UndirectedGraph::new(3);
         let f = Path::new(&g, 0);
         assert!(!f.marked(1));
         assert!(!f.marked(2));
 
-        let g = Digraph::new(3);
+        let g = DiGraph::new(3);
         let f = Path::new(&g, 0);
         assert!(!f.marked(1));
         assert!(!f.marked(2));
     }
 
     #[test]
-    fn connected_graph() {
-        let mut g = Graph::new(5);
+    fn connected_undirected() {
+        let mut g = UndirectedGraph::new(5);
         g.add_edge(0, 1);
         g.add_edge(2, 0);
         g.add_edge(3, 4);
@@ -95,7 +97,7 @@ mod tests {
 
     #[test]
     fn connected_digraph() {
-        let mut g = Digraph::new(5);
+        let mut g = DiGraph::new(5);
         g.add_edge(0, 1);
         g.add_edge(2, 0);
         g.add_edge(3, 4);
@@ -109,8 +111,8 @@ mod tests {
     }
 
     #[test]
-    fn paths() {
-        let mut g = Graph::new(6);
+    fn paths_undirected() {
+        let mut g = UndirectedGraph::new(6);
         g.add_edge(0, 1);
         g.add_edge(1, 2);
         g.add_edge(2, 3);
@@ -145,7 +147,7 @@ mod tests {
 
     #[test]
     fn paths_digraph() {
-        let mut g = Digraph::new(6);
+        let mut g = DiGraph::new(6);
         g.add_edge(0, 1);
         g.add_edge(1, 2);
         g.add_edge(2, 3);
