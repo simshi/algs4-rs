@@ -1,6 +1,8 @@
 pub mod base;
-pub mod dfs_order;
 pub mod edge;
+
+pub mod dfs_order;
+pub mod reversed;
 
 mod directed_graph;
 mod undirected_graph;
@@ -25,6 +27,7 @@ mod symbol_graph;
 mod union_find;
 
 pub use self::acyclic_lp::*;
+pub use self::acyclic_sp::*;
 pub use self::acyclic_sp::*;
 pub use self::basegraph::*;
 pub use self::cc::*;

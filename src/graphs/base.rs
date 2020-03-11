@@ -22,7 +22,10 @@ pub trait Directed: Edge {
 	fn to(&self) -> Vertex {
 		self.vertices().1
 	}
+	fn reversed(&self) -> Self;
 }
+// impl<E: Directed> !Undirected for E {}
+// impl<E: Undirected> !Directed for E {}
 
 pub trait Weighted: Edge {
 	fn weight(&self) -> f64;
@@ -34,7 +37,9 @@ pub trait NonNegative: Weighted {}
 pub trait Graph {
 	type Edge: Edge;
 
+	fn new(v: usize) -> Self;
 	fn v_size(&self) -> usize;
+	fn add_edge(&mut self, edge: &Self::Edge);
 	// fn adj<'a>(&'a self, v: usize) -> impl Iterator<Item = Self::Edge> + 'a;
 	fn adj<'a>(&'a self, v: usize) -> Box<dyn Iterator<Item = Self::Edge> + 'a>;
 }

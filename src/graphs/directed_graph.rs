@@ -8,13 +8,6 @@ pub struct DiGraph {
 	adj: Vec<HashSet<usize>>,
 }
 impl DiGraph {
-	pub fn new(v: usize) -> Self {
-		DiGraph {
-			e: 0,
-			adj: vec![HashSet::new(); v],
-		}
-	}
-
 	pub fn add_edge(&mut self, v: usize, w: usize) {
 		self.adj[v].insert(w);
 		self.e += 1;
@@ -22,6 +15,17 @@ impl DiGraph {
 }
 impl Graph for DiGraph {
 	type Edge = DirectedEdge;
+
+	fn new(v: usize) -> Self {
+		DiGraph {
+			e: 0,
+			adj: vec![HashSet::new(); v],
+		}
+	}
+
+	fn add_edge(&mut self, edge: &Self::Edge) {
+		self.add_edge(edge.from(), edge.to());
+	}
 
 	fn v_size(&self) -> usize {
 		self.adj.len()

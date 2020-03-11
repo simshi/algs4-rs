@@ -1,5 +1,6 @@
 use super::base::*;
 
+#[derive(Debug, PartialEq)]
 pub struct UndirectedEdge {
 	v: usize,
 	w: usize,
@@ -16,6 +17,7 @@ impl Edge for UndirectedEdge {
 }
 impl Undirected for UndirectedEdge {}
 
+#[derive(Debug, PartialEq)]
 pub struct DirectedEdge {
 	v: usize,
 	w: usize,
@@ -30,4 +32,8 @@ impl Edge for DirectedEdge {
 		(self.v, self.w)
 	}
 }
-impl Directed for DirectedEdge {}
+impl Directed for DirectedEdge {
+	fn reversed(&self) -> Self {
+		Self::new(self.to(), self.from())
+	}
+}
