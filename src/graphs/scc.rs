@@ -1,25 +1,28 @@
-use super::{BaseGraph, Digraph};
+use super::base::*;
+use super::dfs_order::*;
+use super::reversed::*;
+
+pub trait SCCDetection {
+    fn scc(&self) -> SCC;
+}
+// only applied to directed graphs
+impl<'a, G, E: Directed> SCCDetection for G
+where
+    G: Graph<Edge = E>,
+{
+    fn scc(&self) -> SCC {
+        SCC::new(self)
+    }
+}
 
 // KosarajuShrir strongly-connected components
 pub struct SCC {
-    count_: usize,
-    marked: Vec<bool>,
     ids: Vec<usize>,
     sizes: Vec<usize>,
 }
 impl SCC {
-    pub fn new<'a>(g: &'a Digraph) -> Self {
-        let mut c = SCC {
-            count_: 0,
-            marked: vec![false; g.v_size()],
-            ids: vec![0; g.v_size()],
-            sizes: vec![0; g.v_size()],
-        };
-        c.init(g);
-        c
-    }
     pub fn count(&self) -> usize {
-        self.count_
+        self.sizes.len()
     }
     pub fn size(&self, v: usize) -> usize {
         self.sizes[self.ids[v]]
@@ -35,23 +38,43 @@ impl SCC {
 
 // private methods
 impl SCC {
-    fn init<'a>(&mut self, g: &'a Digraph) {
+    fn new<G, E: Directed>(g: &G) -> Self
+    where
+        G: Graph<Edge = E>,
+    {
+        let mut c = SCC {
+            ids: vec![0; g.v_size()],
+            sizes: Vec::new(),
+        };
+        c.init(g);
+        c
+    }
+
+    fn init<G, E: Directed>(&mut self, g: &G)
+    where
+        G: Graph<Edge = E>,
+    {
+        let mut marked = vec![false; g.v_size()];
         let gr = g.reversed();
-        for v in gr.topo_order() {
-            if !self.marked[v] {
-                self.dfs(g, v);
-                self.count_ += 1;
+        for v in gr.reversed_post_order() {
+            if !marked[v] {
+                self.sizes.push(0);
+                self.dfs(g, v, &mut marked);
             }
         }
     }
 
-    fn dfs<'a>(&mut self, g: &'a Digraph, v: usize) {
-        self.marked[v] = true;
-        self.ids[v] = self.count_;
-        self.sizes[self.count_] += 1;
-        for &w in g.adj(v) {
-            if !self.marked[w] {
-                self.dfs(g, w)
+    fn dfs<G, E: Directed>(&mut self, g: &G, v: usize, marked: &mut Vec<bool>)
+    where
+        G: Graph<Edge = E>,
+    {
+        marked[v] = true;
+        let id = self.count() - 1;
+        self.ids[v] = id;
+        self.sizes[id] += 1;
+        for w in g.adj(v).map(|e| e.to()) {
+            if !marked[w] {
+                self.dfs(g, w, marked);
             }
         }
     }
@@ -59,12 +82,13 @@ impl SCC {
 
 #[cfg(test)]
 mod tests {
+    use super::super::DiGraph;
     use super::*;
 
     #[test]
     fn empty() {
-        let g = Digraph::new(3);
-        let c = SCC::new(&g);
+        let g = DiGraph::new(3);
+        let c = g.scc();
         assert_eq!(3, c.count());
         assert_eq!(2, c.id(0));
         assert_eq!(1, c.id(1));
@@ -77,7 +101,7 @@ mod tests {
 
     #[test]
     fn connected() {
-        let mut g = Digraph::new(8);
+        let mut g = DiGraph::new(8);
         // 0, (1,2,3) -> 4 -> (5,6) -> 7
         g.add_edge(1, 2);
         g.add_edge(2, 3);
@@ -90,7 +114,7 @@ mod tests {
 
         g.add_edge(5, 7);
 
-        let c = SCC::new(&g);
+        let c = g.scc();
         assert_eq!(5, c.count());
 
         assert_eq!(0, c.id(7));
