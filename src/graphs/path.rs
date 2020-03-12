@@ -63,7 +63,7 @@ impl Path {
 
 #[cfg(test)]
 mod tests {
-    use super::super::DiGraph;
+    use super::super::DirectedGraph;
     use super::super::UndirectedGraph;
     use super::*;
 
@@ -74,7 +74,7 @@ mod tests {
         assert!(!f.marked(1));
         assert!(!f.marked(2));
 
-        let g = DiGraph::new(3);
+        let g = DirectedGraph::new(3);
         let f = Path::new(&g, 0);
         assert!(!f.marked(1));
         assert!(!f.marked(2));
@@ -97,7 +97,7 @@ mod tests {
 
     #[test]
     fn connected_digraph() {
-        let mut g = DiGraph::new(5);
+        let mut g = DirectedGraph::new(5);
         g.add_edge(0, 1);
         g.add_edge(2, 0);
         g.add_edge(3, 4);
@@ -147,7 +147,7 @@ mod tests {
 
     #[test]
     fn paths_digraph() {
-        let mut g = DiGraph::new(6);
+        let mut g = DirectedGraph::new(6);
         g.add_edge(0, 1);
         g.add_edge(1, 2);
         g.add_edge(2, 3);

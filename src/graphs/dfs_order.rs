@@ -168,12 +168,12 @@ fn reversed_post_order_dfs<G, E: Directed>(
 
 #[cfg(test)]
 mod tests {
-	use super::super::DiGraph;
+	use super::super::DirectedGraph;
 	use super::*;
 
 	#[test]
 	fn empty() {
-		let g = DiGraph::new(1);
+		let g = DirectedGraph::new(1);
 		assert_eq!(vec![0], g.pre_order().collect::<Vec<_>>());
 		assert_eq!(vec![0], g.post_order().collect::<Vec<_>>());
 		assert_eq!(vec![0], g.reversed_post_order().collect::<Vec<_>>());
@@ -181,7 +181,7 @@ mod tests {
 
 	#[test]
 	fn simple() {
-		let mut g = DiGraph::new(6);
+		let mut g = DirectedGraph::new(6);
 		g.add_edge(0, 4);
 		g.add_edge(4, 5);
 		g.add_edge(4, 3);

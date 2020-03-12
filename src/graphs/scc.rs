@@ -82,12 +82,12 @@ impl SCC {
 
 #[cfg(test)]
 mod tests {
-    use super::super::DiGraph;
+    use super::super::DirectedGraph;
     use super::*;
 
     #[test]
     fn empty() {
-        let g = DiGraph::new(3);
+        let g = DirectedGraph::new(3);
         let c = g.scc();
         assert_eq!(3, c.count());
         assert_eq!(2, c.id(0));
@@ -101,7 +101,7 @@ mod tests {
 
     #[test]
     fn connected() {
-        let mut g = DiGraph::new(8);
+        let mut g = DirectedGraph::new(8);
         // 0, (1,2,3) -> 4 -> (5,6) -> 7
         g.add_edge(1, 2);
         g.add_edge(2, 3);

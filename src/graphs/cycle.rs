@@ -156,7 +156,7 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::DiGraph;
+    use super::super::DirectedGraph;
     use super::super::UndirectedGraph;
     use super::*;
 
@@ -165,7 +165,7 @@ mod tests {
         let g = UndirectedGraph::new(3);
         assert_eq!(None, CycleDetection::detect_undirected(&g));
 
-        let g = DiGraph::new(3);
+        let g = DirectedGraph::new(3);
         assert_eq!(None, CycleDetection::detect_directed(&g));
     }
 
@@ -190,7 +190,7 @@ mod tests {
 
     #[test]
     fn cycled_digraph() {
-        let mut g = DiGraph::new(6);
+        let mut g = DirectedGraph::new(6);
         g.add_edge(0, 1);
         g.add_edge(2, 0);
         g.add_edge(2, 1);
@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn self_loop_directed() {
-        let mut g = DiGraph::new(1);
+        let mut g = DirectedGraph::new(1);
         g.add_edge(0, 0);
 
         let c = CycleDetection::detect_directed(&g);

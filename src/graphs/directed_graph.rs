@@ -3,21 +3,21 @@ use super::edge::*;
 
 use std::collections::HashSet;
 
-pub struct DiGraph {
+pub struct DirectedGraph {
 	e: usize,
 	adj: Vec<HashSet<usize>>,
 }
-impl DiGraph {
+impl DirectedGraph {
 	pub fn add_edge(&mut self, v: usize, w: usize) {
 		self.adj[v].insert(w);
 		self.e += 1;
 	}
 }
-impl Graph for DiGraph {
+impl Graph for DirectedGraph {
 	type Edge = DirectedEdge;
 
 	fn new(v: usize) -> Self {
-		DiGraph {
+		DirectedGraph {
 			e: 0,
 			adj: vec![HashSet::new(); v],
 		}

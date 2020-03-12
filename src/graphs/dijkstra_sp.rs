@@ -1,12 +1,12 @@
 use super::super::sorting::IndexMinPQ;
-use super::edge_weighted_digraph::{DirectedEdge, EdgeWeightedDigraph};
+use super::edge_weighted_digraph::{DirectedEdge, EdgeWeightedDirectedGraph};
 
 pub struct DijkstraSP {
 	edge_to: Vec<Option<DirectedEdge>>,
 	dist_to_: Vec<f64>,
 }
 impl DijkstraSP {
-	pub fn new(g: &EdgeWeightedDigraph, s: usize) -> Self {
+	pub fn new(g: &EdgeWeightedDirectedGraph, s: usize) -> Self {
 		let mut sp = DijkstraSP {
 			edge_to: vec![None; g.v_size()],
 			dist_to_: vec![std::f64::INFINITY; g.v_size()],
@@ -33,7 +33,7 @@ impl DijkstraSP {
 		q.into_iter().rev()
 	}
 
-	fn dijkstra(&mut self, g: &EdgeWeightedDigraph, s: usize) {
+	fn dijkstra(&mut self, g: &EdgeWeightedDirectedGraph, s: usize) {
 		let mut pq = IndexMinPQ::new(g.v_size());
 		pq.upsert(s, 0.0);
 		self.dist_to_[s] = 0.0;
@@ -61,7 +61,7 @@ mod tests {
 
 	#[test]
 	fn empty() {
-		let g = EdgeWeightedDigraph::new(1);
+		let g = EdgeWeightedDirectedGraph::new(1);
 		assert_eq!(1, g.v_size());
 
 		let sp = DijkstraSP::new(&g, 0);
@@ -70,7 +70,7 @@ mod tests {
 
 	#[test]
 	fn one_edge() {
-		let mut g = EdgeWeightedDigraph::new(3);
+		let mut g = EdgeWeightedDirectedGraph::new(3);
 		g.add_edge(&DirectedEdge::new(0, 1, 1.0));
 
 		let sp = DijkstraSP::new(&g, 0);
@@ -104,7 +104,7 @@ mod tests {
 			(6, 0, 0.58),
 			(6, 4, 0.93),
 		];
-		let mut g = EdgeWeightedDigraph::new(ewd.len());
+		let mut g = EdgeWeightedDirectedGraph::new(ewd.len());
 		for e in ewd {
 			g.add_edge(&DirectedEdge::new(e.0, e.1, e.2));
 		}

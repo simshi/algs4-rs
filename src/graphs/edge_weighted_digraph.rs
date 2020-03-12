@@ -27,14 +27,14 @@ impl PartialOrd for DirectedEdge {
 	}
 }
 
-pub struct EdgeWeightedDigraph {
+pub struct EdgeWeightedDirectedGraph {
 	v: usize,
 	e: usize,
 	adj: Vec<Vec<DirectedEdge>>,
 }
-impl EdgeWeightedDigraph {
+impl EdgeWeightedDirectedGraph {
 	pub fn new(v: usize) -> Self {
-		EdgeWeightedDigraph {
+		EdgeWeightedDirectedGraph {
 			v,
 			e: 0,
 			adj: vec![Vec::new(); v],
@@ -67,7 +67,7 @@ pub struct TopoOrderIter {
 	order: Vec<usize>,
 }
 impl TopoOrderIter {
-	pub fn new(g: &EdgeWeightedDigraph) -> Self {
+	pub fn new(g: &EdgeWeightedDirectedGraph) -> Self {
 		let mut order = Vec::new();
 		post_order(&mut order, g);
 
@@ -83,7 +83,7 @@ impl Iterator for TopoOrderIter {
 }
 
 // post_order helper functions
-fn post_order(order: &mut Vec<usize>, g: &EdgeWeightedDigraph) {
+fn post_order(order: &mut Vec<usize>, g: &EdgeWeightedDirectedGraph) {
 	let mut marked = vec![false; g.v_size()];
 	for v in 0..g.v_size() {
 		post_order_dfs(order, g, &mut marked, v);
@@ -91,7 +91,7 @@ fn post_order(order: &mut Vec<usize>, g: &EdgeWeightedDigraph) {
 }
 fn post_order_dfs(
 	order: &mut Vec<usize>,
-	g: &EdgeWeightedDigraph,
+	g: &EdgeWeightedDirectedGraph,
 	marked: &mut Vec<bool>,
 	v: usize,
 ) {
@@ -112,13 +112,13 @@ mod tests {
 
 	#[test]
 	fn empty() {
-		let g = EdgeWeightedDigraph::new(1);
+		let g = EdgeWeightedDirectedGraph::new(1);
 		assert_eq!(1, g.v_size());
 	}
 
 	#[test]
 	fn add_get() {
-		let mut g = EdgeWeightedDigraph::new(5);
+		let mut g = EdgeWeightedDirectedGraph::new(5);
 		assert_eq!(5, g.v_size());
 		g.add_edge(&DirectedEdge::new(0, 1, 0.5));
 
@@ -133,7 +133,7 @@ mod tests {
 
 	#[test]
 	fn multiple_edges() {
-		let mut g = EdgeWeightedDigraph::new(8);
+		let mut g = EdgeWeightedDirectedGraph::new(8);
 		g.add_edge(&DirectedEdge::new(0, 1, 0.5));
 		g.add_edge(&DirectedEdge::new(0, 2, 0.26));
 		g.add_edge(&DirectedEdge::new(0, 4, 0.38));
@@ -166,7 +166,7 @@ mod tests {
 	#[test]
 	fn topo_order() {
 		let ewdag = vec![(0, 1), (1, 2), (1, 3), (3, 4)];
-		let mut g = EdgeWeightedDigraph::new(5);
+		let mut g = EdgeWeightedDirectedGraph::new(5);
 		for e in ewdag {
 			g.add_edge(&DirectedEdge::new(e.0, e.1, 0.1));
 		}

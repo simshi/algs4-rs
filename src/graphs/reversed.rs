@@ -21,12 +21,12 @@ where
 
 #[cfg(test)]
 mod tests {
-	use super::super::DiGraph;
+	use super::super::DirectedGraph;
 	use super::*;
 
 	#[test]
 	fn empty() {
-		let g = DiGraph::new(1);
+		let g = DirectedGraph::new(1);
 		let r = g.reversed();
 		assert_eq!(1, r.v_size());
 		assert_eq!(None, r.adj(0).next());
@@ -34,7 +34,7 @@ mod tests {
 
 	#[test]
 	fn reversed() {
-		let mut g = DiGraph::new(5);
+		let mut g = DirectedGraph::new(5);
 		g.add_edge(0, 1);
 		g.add_edge(1, 2);
 		g.add_edge(1, 3);
