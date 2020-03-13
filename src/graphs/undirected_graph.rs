@@ -32,6 +32,9 @@ impl Graph for UndirectedGraph {
 	fn v_size(&self) -> usize {
 		self.adj.len()
 	}
+	fn e_size(&self) -> usize {
+		self.e
+	}
 
 	fn adj<'a>(&'a self, v: usize) -> Box<dyn Iterator<Item = Self::Edge> + 'a> {
 		Box::new(self.adj[v].iter().map(move |w| Self::Edge::new(v, *w)))

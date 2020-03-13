@@ -1,12 +1,12 @@
-use std::collections::HashMap;
+use super::base::*;
+use super::UndirectedGraph;
 
-use super::BaseGraph;
-use super::Graph;
+use std::collections::HashMap;
 
 pub struct SymbolGraph {
     st: HashMap<String, usize>,
     keys: Vec<String>,
-    g: Graph,
+    g: UndirectedGraph,
 }
 impl SymbolGraph {
     pub fn new<T>(edges: T) -> Self
@@ -49,7 +49,12 @@ impl SymbolGraph {
     pub fn adj<'a>(&'a self, key: &str) -> Iter<'a> {
         let v = self.st.get(key).unwrap();
         Iter {
-            iter: self.g.adj(*v).cloned().collect::<Vec<usize>>().into_iter(),
+            iter: self
+                .g
+                .adj(*v)
+                .map(|e| e.other(*v))
+                .collect::<Vec<usize>>()
+                .into_iter(),
             keys: &self.keys,
         }
     }

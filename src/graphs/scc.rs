@@ -2,11 +2,11 @@ use super::base::*;
 use super::dfs_order::*;
 use super::reversed::*;
 
-pub trait SCCDetection {
+pub trait HasSCC {
     fn scc(&self) -> SCC;
 }
 // only applied to directed graphs
-impl<'a, G, E: Directed> SCCDetection for G
+impl<G, E: Directed> HasSCC for G
 where
     G: Graph<Edge = E>,
 {

@@ -39,6 +39,7 @@ pub trait Graph {
 
 	fn new(v: usize) -> Self;
 	fn v_size(&self) -> usize;
+	fn e_size(&self) -> usize;
 	fn add_edge(&mut self, edge: &Self::Edge);
 	// fn adj<'a>(&'a self, v: usize) -> impl Iterator<Item = Self::Edge> + 'a;
 	fn adj<'a>(&'a self, v: usize) -> Box<dyn Iterator<Item = Self::Edge> + 'a>;

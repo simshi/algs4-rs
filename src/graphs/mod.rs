@@ -1,6 +1,9 @@
 pub mod base;
 pub mod edge;
 
+mod graph;
+pub use self::graph::*;
+
 pub mod dfs_order;
 pub mod reversed;
 
@@ -17,7 +20,6 @@ mod cycle;
 mod dijkstra_sp;
 mod edge_weighted_digraph;
 mod edge_weighted_graph;
-mod graph;
 mod kruskal_mst;
 mod path;
 mod prim_mst;
@@ -34,7 +36,6 @@ pub use self::cycle::*;
 pub use self::dijkstra_sp::*;
 pub use self::edge_weighted_digraph::*;
 pub use self::edge_weighted_graph::*;
-pub use self::graph::*;
 pub use self::kruskal_mst::*;
 pub use self::path::*;
 pub use self::prim_mst::*;
