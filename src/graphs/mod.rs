@@ -16,7 +16,6 @@ pub use self::undirected_graph::*;
 
 mod acyclic_lp;
 mod acyclic_sp;
-mod basegraph;
 mod cc;
 mod cycle;
 mod dijkstra_sp;
@@ -30,7 +29,6 @@ mod union_find;
 pub use self::acyclic_lp::*;
 pub use self::acyclic_sp::*;
 pub use self::acyclic_sp::*;
-pub use self::basegraph::*;
 pub use self::cc::*;
 pub use self::cycle::*;
 pub use self::dijkstra_sp::*;
