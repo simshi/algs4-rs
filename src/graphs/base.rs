@@ -42,6 +42,11 @@ pub trait Graph {
 	fn e_size(&self) -> usize;
 	fn add_edge(&mut self, edge: &Self::Edge);
 	// fn adj<'a>(&'a self, v: usize) -> impl Iterator<Item = Self::Edge> + 'a;
-	fn adj<'a>(&'a self, v: usize) -> Box<dyn Iterator<Item = Self::Edge> + 'a>;
+	fn adj(&self, v: usize) -> Box<dyn Iterator<Item = Self::Edge> + '_>;
+
+	// same edge(v,w) repeated for v and w with undirected graphs
+	fn edges(&self) -> Box<dyn Iterator<Item = Self::Edge> + '_> {
+		Box::new((0..self.v_size()).map(move |v| self.adj(v)).flatten())
+	}
 }
 pub trait Acyclic: Graph {}

@@ -1,6 +1,6 @@
 use super::base::*;
 
-// use std::cmp::Ordering;
+use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq)]
 pub struct UndirectedEdge {
@@ -46,7 +46,7 @@ impl Directed for DirectedEdge {
 // 	}
 // }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WeightedUndirectedEdge {
 	v: usize,
 	w: usize,
@@ -66,5 +66,10 @@ impl Undirected for WeightedUndirectedEdge {}
 impl Weighted for WeightedUndirectedEdge {
 	fn weight(&self) -> f64 {
 		self.weight
+	}
+}
+impl PartialOrd for WeightedUndirectedEdge {
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		self.weight().partial_cmp(&other.weight())
 	}
 }
