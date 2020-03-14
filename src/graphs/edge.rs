@@ -40,12 +40,6 @@ impl Directed for DirectedEdge {
 	}
 }
 
-// impl<E: Weighted> PartialOrd for E {
-// 	fn partial_cmp(&self, other: &E) -> Option<Ordering> {
-// 		self.weight().partial_cmp(&other.weight())
-// 	}
-// }
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WeightedUndirectedEdge {
 	v: usize,
@@ -69,6 +63,38 @@ impl Weighted for WeightedUndirectedEdge {
 	}
 }
 impl PartialOrd for WeightedUndirectedEdge {
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		self.weight().partial_cmp(&other.weight())
+	}
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WeightedDirectedEdge {
+	v: usize,
+	w: usize,
+	weight: f64,
+}
+impl WeightedDirectedEdge {
+	pub fn new(v: usize, w: usize, weight: f64) -> Self {
+		WeightedDirectedEdge { v, w, weight }
+	}
+}
+impl Edge for WeightedDirectedEdge {
+	fn vertices(&self) -> (Vertex, Vertex) {
+		(self.v, self.w)
+	}
+}
+impl Directed for WeightedDirectedEdge {
+	fn reversed(&self) -> Self {
+		Self::new(self.w, self.v, self.weight)
+	}
+}
+impl Weighted for WeightedDirectedEdge {
+	fn weight(&self) -> f64 {
+		self.weight
+	}
+}
+impl PartialOrd for WeightedDirectedEdge {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
 		self.weight().partial_cmp(&other.weight())
 	}

@@ -26,7 +26,7 @@
 
 ## Minimum Spanning Tree
 - `IndexMinPQ::upsert` make code clear
-- `Iterator::flatten` in `EdgeWeightedGraph`
+- `Iterator::flatten` in `Graph`
 - implement Prim MST in eager approach, at most V-1 elements in IndexMinPQ, so E*LogV
 - `Iterator::sum` and `Iterator::filter_map` is useful
 - Kruskal MST is easier
