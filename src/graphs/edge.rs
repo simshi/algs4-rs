@@ -99,3 +99,44 @@ impl PartialOrd for WeightedDirectedEdge {
 		self.weight().partial_cmp(&other.weight())
 	}
 }
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct NonNegativeWeightedDirectedEdge {
+	v: usize,
+	w: usize,
+	weight: f64,
+}
+impl NonNegativeWeightedDirectedEdge {
+	pub fn new(v: usize, w: usize, weight: f64) -> Option<Self> {
+		if weight < 0.0 {
+			None
+		} else {
+			Some(NonNegativeWeightedDirectedEdge { v, w, weight })
+		}
+	}
+}
+impl Edge for NonNegativeWeightedDirectedEdge {
+	fn vertices(&self) -> (Vertex, Vertex) {
+		(self.v, self.w)
+	}
+}
+impl Directed for NonNegativeWeightedDirectedEdge {
+	fn reversed(&self) -> Self {
+		NonNegativeWeightedDirectedEdge {
+			v: self.w,
+			w: self.v,
+			weight: self.weight,
+		}
+	}
+}
+impl Weighted for NonNegativeWeightedDirectedEdge {
+	fn weight(&self) -> f64 {
+		self.weight
+	}
+}
+impl NonNegative for NonNegativeWeightedDirectedEdge {}
+impl PartialOrd for NonNegativeWeightedDirectedEdge {
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		self.weight().partial_cmp(&other.weight())
+	}
+}
