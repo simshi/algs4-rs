@@ -1,12 +1,12 @@
 use super::base::*;
 
-pub trait Reversed {
+pub trait Reversed<E: Directed> {
 	fn reversed(&self) -> Self;
 }
 
-impl<G, E: Directed> Reversed for G
+impl<G, E: Directed> Reversed<E> for G
 where
-	G: Graph<Edge = E>,
+	G: MutableGraph<Edge = E>,
 {
 	fn reversed(&self) -> Self {
 		let mut r = Self::new(self.v_size());

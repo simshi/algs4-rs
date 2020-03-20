@@ -4,9 +4,10 @@ pub trait HasCC {
     fn cc(&self) -> CC;
 }
 // CC only applied to undirected graphs
-impl<'a, G, E: Undirected> HasCC for G
+impl<G> HasCC for G
 where
-    G: Graph<Edge = E>,
+    G::Edge: Undirected,
+    G: Graph,
 {
     fn cc(&self) -> CC {
         CC::new(self)
@@ -18,9 +19,9 @@ pub struct CC {
     sizes: Vec<usize>,
 }
 impl CC {
-    fn new<G, E: Undirected>(g: &G) -> Self
+    fn new<G>(g: &G) -> Self
     where
-        G: Graph<Edge = E>,
+        G: Graph,
     {
         let mut c = CC {
             ids: vec![0; g.v_size()],
@@ -46,9 +47,9 @@ impl CC {
 
 // private methods
 impl CC {
-    fn init<G, E: Undirected>(&mut self, g: &G)
+    fn init<G>(&mut self, g: &G)
     where
-        G: Graph<Edge = E>,
+        G: Graph,
     {
         let mut marked = vec![false; g.v_size()];
         for v in 0..g.v_size() {
@@ -59,9 +60,9 @@ impl CC {
         }
     }
 
-    fn dfs<G, E: Undirected>(&mut self, g: &G, v: usize, marked: &mut Vec<bool>)
+    fn dfs<G>(&mut self, g: &G, v: usize, marked: &mut Vec<bool>)
     where
-        G: Graph<Edge = E>,
+        G: Graph,
     {
         marked[v] = true;
         let id = self.count() - 1;

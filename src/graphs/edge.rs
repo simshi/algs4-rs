@@ -2,7 +2,7 @@ use super::base::*;
 
 use std::cmp::Ordering;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct UndirectedEdge {
 	v: usize,
 	w: usize,
@@ -19,7 +19,7 @@ impl Edge for UndirectedEdge {
 }
 impl Undirected for UndirectedEdge {}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct DirectedEdge {
 	v: usize,
 	w: usize,

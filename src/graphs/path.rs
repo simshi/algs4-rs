@@ -7,7 +7,7 @@ pub struct Path {
 }
 
 impl Path {
-    pub fn new<'a, G, E>(g: &'a G, s: usize) -> Self
+    pub fn new<G, E>(g: &G, s: usize) -> Self
     where
         E: Edge,
         G: Graph<Edge = E>,
@@ -46,7 +46,7 @@ impl Path {
 }
 
 impl Path {
-    fn dfs<'a, G, E>(&mut self, g: &'a G, v: usize)
+    fn dfs<G, E>(&mut self, g: &G, v: usize)
     where
         E: Edge,
         G: Graph<Edge = E>,

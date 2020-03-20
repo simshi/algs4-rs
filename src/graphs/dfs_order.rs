@@ -1,12 +1,15 @@
 use super::base::*;
 
-pub trait DFSOrder<G, E> {
+pub trait DFSOrder<G, E: Directed>
+where
+	G: Graph<Edge = E>,
+{
 	fn pre_order(&self) -> PreOrderIter<'_, G>;
 	fn post_order(&self) -> PostOrderIter<'_, G, E>;
 	fn reversed_post_order(&self) -> std::vec::IntoIter<Vertex>;
 }
 // dfs order applied only to directed graphs
-impl<'a, G, E: Directed> DFSOrder<G, E> for G
+impl<G, E: Directed> DFSOrder<G, E> for G
 where
 	G: Graph<Edge = E>,
 {
@@ -19,7 +22,7 @@ where
 		}
 	}
 
-	fn post_order(&self) -> PostOrderIter<'_, G, E> {
+	fn post_order(&self) -> PostOrderIter<G, E> {
 		PostOrderIter {
 			g: self,
 			v: 0,
@@ -33,19 +36,6 @@ where
 	}
 }
 
-pub trait TopologicalOrder {
-	fn topo_order(&self) -> std::vec::IntoIter<Vertex>;
-}
-// topologic order applied only to directed acyclic graphs
-impl<G, E: Directed> TopologicalOrder for G
-where
-	G: Acyclic<Edge = E>,
-{
-	fn topo_order(&self) -> std::vec::IntoIter<Vertex> {
-		reversed_post_order(self)
-	}
-}
-
 pub struct PreOrderIter<'a, G> {
 	g: &'a G,
 	v: usize,
@@ -54,7 +44,7 @@ pub struct PreOrderIter<'a, G> {
 }
 impl<'a, G, E> Iterator for PreOrderIter<'a, G>
 where
-	E: Directed + 'a,
+	E: Directed,
 	G: Graph<Edge = E>,
 {
 	type Item = usize;
@@ -83,7 +73,11 @@ where
 	}
 }
 
-pub struct PostOrderIter<'a, G, E> {
+pub struct PostOrderIter<'a, G, E>
+where
+	E: Directed,
+	G: Graph<Edge = E>,
+{
 	g: &'a G,
 	v: usize,
 	marked: Vec<bool>,
@@ -91,7 +85,7 @@ pub struct PostOrderIter<'a, G, E> {
 }
 impl<'a, G, E> Iterator for PostOrderIter<'a, G, E>
 where
-	E: Directed + 'a,
+	E: Directed,
 	G: Graph<Edge = E>,
 {
 	type Item = usize;

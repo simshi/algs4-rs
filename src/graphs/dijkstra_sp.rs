@@ -10,7 +10,7 @@ where
 // Dijkstra algorithm applied to non-nagative DAG
 impl<G, E> HasDijkstraSP<E> for G
 where
-	E: Directed + NonNegative + Clone + Copy,
+	E: Directed + NonNegative,
 	G: Graph<Edge = E>,
 {
 	fn dijkstra_sp(&self, s: usize) -> SP<E> {
@@ -26,7 +26,7 @@ pub struct SP<E: Directed> {
 }
 impl<E> SP<E>
 where
-	E: Directed + NonNegative + Clone + Copy,
+	E: Directed + NonNegative,
 {
 	pub fn new(v: usize) -> Self {
 		SP {
@@ -53,9 +53,9 @@ where
 	}
 }
 
-fn dijkstra_sp<'a, G, E>(p: &mut SP<E>, g: &G, s: usize)
+fn dijkstra_sp<G, E>(p: &mut SP<E>, g: &G, s: usize)
 where
-	E: Directed + NonNegative + Clone + Copy,
+	E: Directed + NonNegative,
 	G: Graph<Edge = E>,
 {
 	let mut pq = IndexMinPQ::new(g.v_size());
@@ -70,13 +70,13 @@ where
 
 fn relax<E>(p: &mut SP<E>, e: E, pq: &mut IndexMinPQ<f64>)
 where
-	E: Directed + NonNegative + Clone + Copy,
+	E: Directed + NonNegative,
 {
 	let v = e.from();
 	let w = e.to();
 	if p.dist_to[v] + e.weight() < p.dist_to[w] {
-		p.edge_to[w] = Some(e);
 		p.dist_to[w] = p.dist_to[v] + e.weight();
+		p.edge_to[w] = Some(e);
 		pq.upsert(w, p.dist_to[w]);
 	}
 }

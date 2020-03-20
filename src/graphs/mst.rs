@@ -10,7 +10,7 @@ pub trait MST {
 }
 impl<G, E> MST for G
 where
-    E: Undirected + Weighted + PartialOrd + Copy,
+    E: Undirected + Weighted,
     G: Graph<Edge = E>,
 {
     type Edge = G::Edge;
@@ -31,7 +31,7 @@ pub struct KruskalMST<E: Undirected + Weighted> {
 
 impl<E> KruskalMST<E>
 where
-    E: Undirected + Weighted + PartialOrd + Copy,
+    E: Undirected + Weighted,
 {
     fn new<G>(g: &G) -> Self
     where
@@ -69,7 +69,7 @@ where
                 continue;
             }
             uf.union(v, w);
-            self.edges_.push(e.clone());
+            self.edges_.push(e);
             if self.edges_.len() == g.v_size() - 1 {
                 break;
             }
@@ -85,7 +85,7 @@ pub struct PrimMST<E: Undirected + Weighted> {
 
 impl<E> PrimMST<E>
 where
-    E: Undirected + Weighted + PartialOrd + Copy,
+    E: Undirected + Weighted,
 {
     pub fn new<G>(g: &G) -> Self
     where
@@ -141,8 +141,8 @@ where
             // update w to the cheaper edge
             let cheaper = pq.get(w).map_or(true, |&w| e.weight() < w);
             if cheaper {
-                self.edge_to[w] = Some(e.clone());
                 pq.upsert(w, e.weight());
+                self.edge_to[w] = Some(e);
             }
         }
     }

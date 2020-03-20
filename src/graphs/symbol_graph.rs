@@ -27,7 +27,7 @@ impl SymbolGraph {
         let mut sg = SymbolGraph {
             st,
             keys,
-            g: Graph::new(size),
+            g: UndirectedGraph::new(size),
         };
         for (v, w) in indexed_edgeds {
             sg.g.add_edge(v, w);

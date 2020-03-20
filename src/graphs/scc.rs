@@ -6,9 +6,10 @@ pub trait HasSCC {
     fn scc(&self) -> SCC;
 }
 // only applied to directed graphs
-impl<G, E: Directed> HasSCC for G
+impl<G> HasSCC for G
 where
-    G: Graph<Edge = E>,
+    G::Edge: Directed,
+    G: MutableGraph,
 {
     fn scc(&self) -> SCC {
         SCC::new(self)
@@ -40,7 +41,7 @@ impl SCC {
 impl SCC {
     fn new<G, E: Directed>(g: &G) -> Self
     where
-        G: Graph<Edge = E>,
+        G: MutableGraph<Edge = E>,
     {
         let mut c = SCC {
             ids: vec![0; g.v_size()],
@@ -52,7 +53,7 @@ impl SCC {
 
     fn init<G, E: Directed>(&mut self, g: &G)
     where
-        G: Graph<Edge = E>,
+        G: MutableGraph<Edge = E>,
     {
         let mut marked = vec![false; g.v_size()];
         let gr = g.reversed();
