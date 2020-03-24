@@ -1,11 +1,12 @@
 use super::super::sorting::IndexMinPQ;
 use super::base::*;
+use super::weighted_path::*;
 
 pub trait HasDijkstraSP<E>
 where
 	E: Directed + NonNegative,
 {
-	fn dijkstra_sp(&self, s: usize) -> SP<E>;
+	fn dijkstra_sp(&self, s: usize) -> WeightedPath<E>;
 }
 // Dijkstra algorithm applied to non-nagative DAG
 impl<G, E> HasDijkstraSP<E> for G
@@ -13,47 +14,14 @@ where
 	E: Directed + NonNegative,
 	G: Graph<Edge = E>,
 {
-	fn dijkstra_sp(&self, s: usize) -> SP<E> {
-		let mut p = SP::new(self.v_size());
+	fn dijkstra_sp(&self, s: usize) -> WeightedPath<E> {
+		let mut p = WeightedPath::new(self.v_size(), std::f64::INFINITY);
 		dijkstra_sp(&mut p, self, s);
 		p
 	}
 }
 
-pub struct SP<E: Directed> {
-	edge_to: Vec<Option<E>>,
-	dist_to: Vec<f64>,
-}
-impl<E> SP<E>
-where
-	E: Directed + NonNegative,
-{
-	pub fn new(v: usize) -> Self {
-		SP {
-			edge_to: vec![None; v],
-			dist_to: vec![std::f64::INFINITY; v],
-		}
-	}
-
-	pub fn has_path_to(&self, v: usize) -> bool {
-		self.edge_to[v].is_some()
-	}
-	pub fn dist_to(&self, v: usize) -> f64 {
-		self.dist_to[v]
-	}
-	pub fn path_to(&self, v: usize) -> impl Iterator<Item = E> {
-		let mut q = Vec::new();
-		let mut edge = self.edge_to[v];
-		while let Some(e) = edge {
-			q.push(e);
-			edge = self.edge_to[e.from()];
-		}
-
-		q.into_iter().rev()
-	}
-}
-
-fn dijkstra_sp<G, E>(p: &mut SP<E>, g: &G, s: usize)
+fn dijkstra_sp<G, E>(p: &mut WeightedPath<E>, g: &G, s: usize)
 where
 	E: Directed + NonNegative,
 	G: Graph<Edge = E>,
@@ -68,7 +36,7 @@ where
 	}
 }
 
-fn relax<E>(p: &mut SP<E>, e: E, pq: &mut IndexMinPQ<f64>)
+fn relax<E>(p: &mut WeightedPath<E>, e: E, pq: &mut IndexMinPQ<f64>)
 where
 	E: Directed + NonNegative,
 {

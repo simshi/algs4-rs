@@ -156,7 +156,7 @@ fn reversed_post_order_dfs<G, E: Directed>(
 		reversed_post_order_dfs(order, w, i, marked, g);
 	}
 
-	*i = *i - 1;
+	*i -= 1;
 	order[*i] = v;
 }
 

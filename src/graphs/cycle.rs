@@ -1,6 +1,6 @@
 use super::base::*;
 
-#[derive(PartialEq, Debug)]
+#[derive(Default, PartialEq, Debug)]
 pub struct Cycle {
     path: Vec<usize>,
 }
@@ -61,10 +61,10 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
         let mut s = Self::new(g);
         let mut c = Cycle::new();
         s.undirected(&mut c);
-        if c.path.len() > 0 {
-            Some(c)
-        } else {
+        if c.path.is_empty() {
             None
+        } else {
+            Some(c)
         }
     }
     pub fn detect_directed<E: Directed>(g: &'a G) -> Option<Cycle>
@@ -74,10 +74,10 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
         let mut s = Self::new(g);
         let mut c = Cycle::new();
         s.directed(&mut c);
-        if c.path.len() > 0 {
-            Some(c)
-        } else {
+        if c.path.is_empty() {
             None
+        } else {
+            Some(c)
         }
     }
 
@@ -100,7 +100,7 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
     fn dfs_undirected(&mut self, c: &mut Cycle, p: usize, v: usize) {
         self.marked[v] = true;
         for e in self.g.adj(v) {
-            if c.path.len() > 0 {
+            if !c.path.is_empty() {
                 return;
             }
 
@@ -132,7 +132,7 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
         self.marked[v] = true;
         on_stack[v] = true;
         for e in self.g.adj(v) {
-            if c.path.len() > 0 {
+            if !c.path.is_empty() {
                 return;
             }
             let w = e.other(v);

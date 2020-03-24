@@ -8,8 +8,10 @@ mod graph;
 pub use self::acyclic_graph::*;
 pub use self::edge::*;
 pub use self::graph::*;
+pub mod weighted_path;
 
 // algorithms
+pub mod acyclic_path;
 pub mod cc;
 pub mod cycle;
 pub mod dfs_order;
@@ -23,17 +25,10 @@ mod undirected_graph;
 pub use self::directed_graph::*;
 pub use self::undirected_graph::*;
 
-mod acyclic_lp;
-mod acyclic_sp;
-mod edge_weighted_digraph;
 mod path;
 mod symbol_graph;
 mod union_find;
 
-pub use self::acyclic_lp::*;
-pub use self::acyclic_sp::*;
-pub use self::acyclic_sp::*;
-pub use self::edge_weighted_digraph::*;
 pub use self::path::*;
 pub use self::symbol_graph::*;
 pub use self::union_find::*;
