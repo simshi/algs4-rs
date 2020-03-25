@@ -12,6 +12,7 @@ pub mod weighted_path;
 
 // algorithms
 pub mod acyclic_path;
+pub mod bellmanford_sp;
 pub mod cc;
 pub mod cycle;
 pub mod dfs_order;

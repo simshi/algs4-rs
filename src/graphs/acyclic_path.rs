@@ -137,7 +137,7 @@ mod tests {
 			(6, 0, 0.58),
 			(6, 4, 0.93),
 		];
-		let mut g = EWDG::new(ewdag.len());
+		let mut g = EWDG::new(8);
 		for e in ewdag {
 			g.add_edge(&WeightedDirectedEdge::new(e.0, e.1, e.2));
 		}
@@ -199,7 +199,7 @@ mod tests {
 			(6, 0, 0.58),
 			(6, 4, 0.93),
 		];
-		let mut g = EWDG::new(ewdag.len());
+		let mut g = EWDG::new(8);
 		for e in ewdag {
 			g.add_edge(&WeightedDirectedEdge::new(e.0, e.1, e.2));
 		}

@@ -5,8 +5,11 @@ pub struct Cycle {
     path: Vec<usize>,
 }
 impl Cycle {
-    pub fn new() -> Self {
-        Cycle { path: Vec::new() }
+    fn new() -> Self {
+        Cycle::default()
+    }
+    fn is_empty(&self) -> bool {
+        self.path.is_empty()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &usize> {
@@ -61,7 +64,7 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
         let mut s = Self::new(g);
         let mut c = Cycle::new();
         s.undirected(&mut c);
-        if c.path.is_empty() {
+        if c.is_empty() {
             None
         } else {
             Some(c)
@@ -74,7 +77,7 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
         let mut s = Self::new(g);
         let mut c = Cycle::new();
         s.directed(&mut c);
-        if c.path.is_empty() {
+        if c.is_empty() {
             None
         } else {
             Some(c)
@@ -97,10 +100,10 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
             }
         }
     }
-    fn dfs_undirected(&mut self, c: &mut Cycle, p: usize, v: usize) {
+    fn dfs_undirected(&mut self, c: &mut Cycle, prev: usize, v: usize) {
         self.marked[v] = true;
         for e in self.g.adj(v) {
-            if !c.path.is_empty() {
+            if !c.is_empty() {
                 return;
             }
 
@@ -108,7 +111,7 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
             if !self.marked[w] {
                 self.edge_to[w] = v;
                 self.dfs_undirected(c, v, w);
-            } else if w != p {
+            } else if w != prev {
                 c.path.push(w);
                 let mut x = v;
                 while x != w {
@@ -132,7 +135,7 @@ impl<'a, G: Graph> CycleDetection<'a, G> {
         self.marked[v] = true;
         on_stack[v] = true;
         for e in self.g.adj(v) {
-            if !c.path.is_empty() {
+            if !c.is_empty() {
                 return;
             }
             let w = e.other(v);

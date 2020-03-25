@@ -98,7 +98,7 @@ mod tests {
 			(6, 0, 0.58),
 			(6, 4, 0.93),
 		];
-		let mut g = ENNWDG::new(ewd.len());
+		let mut g = ENNWDG::new(8);
 		for e in ewd {
 			g.add_edge(&NNWDE::new(e.0, e.1, e.2).unwrap());
 		}
