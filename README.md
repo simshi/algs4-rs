@@ -5,7 +5,8 @@
 ## Content
   - [x] [Sorting](./src/sorting/README.md)
   - [x] [Searching](./src/searching/README.md)
-  - [ ] [Graph](./src/graphs/README.md)
+  - [x] [Graph](./src/graphs/README.md)
+  - [ ] [String](./src/strings/README.md)
 
 ## Test && Benchmark
  - `cargo run --release --bin union_find < data/largeUF.txt`
