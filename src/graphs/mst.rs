@@ -23,7 +23,6 @@ where
     }
 }
 
-// minimum spanning tree by Eager Prim algorithm
 pub struct KruskalMST<E: Undirected + Weighted> {
     edges_: Vec<E>,
     weight: f64,

@@ -3,11 +3,15 @@ pub mod base;
 
 // concepts
 mod acyclic_graph;
+mod directed_graph;
 mod edge;
 mod graph;
+mod undirected_graph;
 pub use self::acyclic_graph::*;
+pub use self::directed_graph::*;
 pub use self::edge::*;
 pub use self::graph::*;
+pub use self::undirected_graph::*;
 pub mod weighted_path;
 
 // algorithms
@@ -20,11 +24,6 @@ pub mod dijkstra_sp;
 pub mod mst;
 pub mod reversed;
 pub mod scc;
-
-mod directed_graph;
-mod undirected_graph;
-pub use self::directed_graph::*;
-pub use self::undirected_graph::*;
 
 mod path;
 mod symbol_graph;

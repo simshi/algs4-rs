@@ -1,6 +1,6 @@
 use super::base::*;
 use super::dfs_order::*;
-use super::reversed::*;
+use super::DirectedGraph;
 
 pub trait HasSCC {
     fn scc(&self) -> SCC;
@@ -9,7 +9,7 @@ pub trait HasSCC {
 impl<G> HasSCC for G
 where
     G::Edge: Directed,
-    G: MutableGraph,
+    G: Graph,
 {
     fn scc(&self) -> SCC {
         SCC::new(self)
@@ -41,7 +41,7 @@ impl SCC {
 impl SCC {
     fn new<G, E: Directed>(g: &G) -> Self
     where
-        G: MutableGraph<Edge = E>,
+        G: Graph<Edge = E>,
     {
         let mut c = SCC {
             ids: vec![0; g.v_size()],
@@ -53,11 +53,17 @@ impl SCC {
 
     fn init<G, E: Directed>(&mut self, g: &G)
     where
-        G: MutableGraph<Edge = E>,
+        G: Graph<Edge = E>,
     {
+        let mut dg = DirectedGraph::new(g.v_size());
+        for v in 0..g.v_size() {
+            for e in g.adj(v) {
+                dg.add_edge(e.to(), e.from());
+            }
+        }
+
         let mut marked = vec![false; g.v_size()];
-        let gr = g.reversed();
-        for v in gr.reversed_post_order() {
+        for v in dg.reversed_post_order() {
             if !marked[v] {
                 self.sizes.push(0);
                 self.dfs(g, v, &mut marked);

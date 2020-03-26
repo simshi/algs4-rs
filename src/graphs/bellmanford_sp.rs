@@ -63,7 +63,6 @@ impl BellmanfordSP {
 	{
 		for e in g.adj(v) {
 			let w = e.to();
-			println!("relax:{}->{}", v, w);
 			if sp.dist_to[w] > sp.dist_to[v] + e.weight() {
 				sp.dist_to[w] = sp.dist_to[v] + e.weight();
 				sp.edge_to[w] = Some(e);
@@ -90,11 +89,9 @@ impl BellmanfordSP {
 		E: Directed + Weighted,
 		G: Graph<Edge = E>,
 	{
-		println!("check cycle");
 		let mut cg = EdgeWeightedDirectedGraph::new(g.v_size());
 		for ee in &sp.edge_to {
 			if let Some(e) = ee {
-				println!("edge:{}->{}", e.from(), e.to());
 				cg.add_edge(&WeightedDirectedEdge::new(e.from(), e.to(), e.weight()));
 			}
 		}
