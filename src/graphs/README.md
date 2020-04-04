@@ -70,4 +70,4 @@
 
 ## Some Thoughts On Design
   - comparing to OOP (e.g. Java) design, `trait` provides more flexiblities, can do more compositions;
-  - for me, by `trait` seems we can achieve a perfect **Mixin** mechanism without messed up with inheritance, mixin is a poison in OOP but feels very nature implemented with `trait`
+  - for me, by `trait` seems we can achieve a perfect **Mixin** mechanism without messing up with inheritance, mixin is a poison in OOP but feels very nature implemented with `trait`
