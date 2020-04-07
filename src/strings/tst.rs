@@ -1,44 +1,34 @@
+use std::cmp::Ordering::{Equal, Greater, Less};
 use std::iter::FromIterator;
 
-const R: usize = 256;
-
 struct Node<T> {
+	c: char,
 	val: Option<T>,
-	next: [NodePtr<T>; R],
+	left: NodePtr<T>,
+	middle: NodePtr<T>,
+	right: NodePtr<T>,
 }
 type NodePtr<T> = Option<Box<Node<T>>>;
 
-// TODO: find a better way to init `next` array
-macro_rules! make_array {
-	($n:expr, $constructor:expr, $ty:ty) => {{
-		let mut items: [std::mem::MaybeUninit<$ty>; $n] =
-			unsafe { std::mem::MaybeUninit::uninit().assume_init() };
-		for (i, elem) in items[..].iter_mut().enumerate() {
-			unsafe {
-				std::ptr::write(elem.as_mut_ptr(), $constructor(i));
-				}
-			}
-
-		unsafe { std::mem::transmute::<_, [$ty; $n]>(items) }
-		}};
-}
-
 impl<T> Node<T> {
-	fn new(val: Option<T>) -> Self {
+	fn new(c: char, val: Option<T>) -> Self {
 		Self {
+			c,
 			val,
-			next: make_array!(R, |_| None, NodePtr<T>),
+			left: None,
+			middle: None,
+			right: None,
 		}
 	}
 }
 
-pub struct TrieST<T: Copy> {
+pub struct TST<T: Copy> {
 	root: NodePtr<T>,
 	n: usize,
 }
-impl<T: Copy> TrieST<T> {
+impl<T: Copy> TST<T> {
 	pub fn new() -> Self {
-		Self { root: None, n: 0 }
+		TST { root: None, n: 0 }
 	}
 	pub fn size(&self) -> usize {
 		self.n
@@ -48,29 +38,54 @@ impl<T: Copy> TrieST<T> {
 	}
 
 	pub fn get(&self, key: &str) -> Option<&T> {
-		Self::_get_node(&self.root, key, 0)
-			.as_ref()
-			.and_then(|node| node.val.as_ref())
+		if key.is_empty() {
+			None
+		} else {
+			Self::_get_node(&self.root, key, 0)
+				.as_ref()
+				.and_then(|node| node.val.as_ref())
+		}
 	}
 	pub fn put(&mut self, key: &str, val: T) {
-		let p = self.root.take();
-		self.root = self._put(p, key, val, 0);
+		if !key.is_empty() {
+			let p = self.root.take();
+			self.root = self._put(p, key, val, 0);
+		}
 	}
 	pub fn delete(&mut self, key: &str) {
-		let p = self.root.take();
-		self.root = self._delete(p, key, 0);
+		if !key.is_empty() {
+			let p = self.root.take();
+			self.root = self._delete(p, key, 0);
+		}
 	}
 
 	pub fn keys_with_prefix(&self, prefix: &str) -> impl Iterator<Item = String> {
-		let mut results = Vec::new();
-		let p = Self::_get_node(&self.root, prefix, 0);
 		let mut cv = prefix.chars().collect::<Vec<_>>();
-		Self::_collect(p, &mut cv, &mut results);
+		let mut results = Vec::new();
+
+		if prefix.is_empty() {
+			Self::_collect(&self.root, &mut cv, &mut results);
+		} else {
+			let p = Self::_get_node(&self.root, prefix, 0);
+
+			if let Some(node) = p {
+				if node.val.is_some() {
+					// a key equals to prefix exists
+					results.push(String::from(prefix));
+				}
+				Self::_collect(&node.middle, &mut cv, &mut results);
+			}
+		};
 
 		results.into_iter()
 	}
 	pub fn longest_key_of(&self, prefix: &str) -> Option<String> {
-		let max_length = Self::_longest_key(&self.root, prefix, 0, 0);
+		if prefix.is_empty() {
+			return None;
+		}
+
+		let mut max_length = 0;
+		Self::_longest_key(&self.root, prefix, 0, &mut max_length);
 		if max_length == 0 {
 			None
 		} else {
@@ -79,66 +94,77 @@ impl<T: Copy> TrieST<T> {
 	}
 	pub fn keys_match_pattern(&self, pattern: &str) -> impl Iterator<Item = String> {
 		let mut results = Vec::new();
-		let mut cv: Vec<char> = Vec::new();
-		Self::_collect_match_pattern(&self.root, pattern, &mut cv, &mut results);
-
+		if !pattern.is_empty() {
+			let mut cv: Vec<char> = Vec::new();
+			Self::_collect_match_pattern(&self.root, pattern, &mut cv, &mut results);
+		}
 		results.into_iter()
 	}
 }
 
 // private methods
-impl<T: Copy> TrieST<T> {
+impl<T: Copy> TST<T> {
 	fn _get_node<'a>(p: &'a NodePtr<T>, key: &str, d: usize) -> &'a NodePtr<T> {
 		if let Some(node) = p {
-			if d < key.len() {
-				let c = key.chars().nth(d).unwrap();
-				return Self::_get_node(&node.next[c as usize], key, d + 1);
-			}
+			let c = key.chars().nth(d).unwrap();
+			return match c.cmp(&node.c) {
+				Less => Self::_get_node(&node.left, key, d),
+				Greater => Self::_get_node(&node.right, key, d),
+				Equal if d + 1 == key.len() => p,
+				_ => Self::_get_node(&node.middle, key, d + 1),
+			};
 		}
 
 		p
 	}
 
 	fn _put(&mut self, p: NodePtr<T>, key: &str, val: T, d: usize) -> NodePtr<T> {
+		let c = key.chars().nth(d).unwrap();
 		let mut is_new = false;
 		let mut node = match p {
 			Some(node) => node,
 			_ => {
-				let n = Box::new(Node::new(None));
+				let n = Box::new(Node::new(c, None));
 				is_new = true;
 				n
 			}
 		};
 
-		if d == key.len() {
-			if is_new {
-				self.n += 1;
+		match c.cmp(&node.c) {
+			Less => node.left = self._put(node.left.take(), key, val, d),
+			Greater => node.right = self._put(node.right.take(), key, val, d),
+			Equal if d + 1 == key.len() => {
+				if is_new {
+					self.n += 1;
+				}
+				node.val = Some(val);
 			}
-			node.val = Some(val);
-			return Some(node);
+			_ => node.middle = self._put(node.middle.take(), key, val, d + 1),
 		}
-
-		let c = key.chars().nth(d).unwrap();
-		let pc = node.next[c as usize].take();
-		node.next[c as usize] = self._put(pc, key, val, d + 1);
 
 		Some(node)
 	}
 
 	fn _delete(&mut self, p: NodePtr<T>, key: &str, d: usize) -> NodePtr<T> {
 		p.and_then(|mut node| {
-			if d == key.len() {
-				if node.val.is_some() {
-					self.n -= 1;
-					node.val = None;
+			let c = key.chars().nth(d).unwrap();
+			match c.cmp(&node.c) {
+				Less => node.left = self._delete(node.left.take(), key, d),
+				Greater => node.right = self._delete(node.right.take(), key, d),
+				Equal if d + 1 == key.len() => {
+					if node.val.is_some() {
+						self.n -= 1;
+						node.val = None;
+					}
 				}
-			} else {
-				let c = key.chars().nth(d).unwrap();
-				let pc = node.next[c as usize].take();
-				node.next[c as usize] = self._delete(pc, key, d + 1);
+				_ => node.middle = self._delete(node.middle.take(), key, d + 1),
 			}
 
-			if node.val.is_some() || node.next.iter().any(|p| p.is_some()) {
+			if node.val.is_some()
+				|| node.left.is_some()
+				|| node.middle.is_some()
+				|| node.right.is_some()
+			{
 				Some(node)
 			} else {
 				None
@@ -149,33 +175,33 @@ impl<T: Copy> TrieST<T> {
 	fn _collect(p: &NodePtr<T>, cv: &mut Vec<char>, results: &mut Vec<String>) {
 		if let Some(node) = p.as_ref() {
 			if node.val.is_some() {
+				cv.push(node.c);
 				results.push(String::from_iter(cv.iter().cloned()));
+				cv.pop();
 			}
 
-			for (i, p) in node.next.iter().enumerate() {
-				if p.is_some() {
-					cv.push(std::char::from_u32(i as u32).unwrap());
-					Self::_collect(p, cv, results);
-					cv.pop();
-				}
-			}
+			Self::_collect(&node.left, cv, results);
+			cv.push(node.c);
+			Self::_collect(&node.middle, cv, results);
+			cv.pop();
+			Self::_collect(&node.right, cv, results);
 		}
 	}
 
-	fn _longest_key(p: &NodePtr<T>, query: &str, d: usize, mut length: usize) -> usize {
+	fn _longest_key(p: &NodePtr<T>, query: &str, d: usize, length: &mut usize) {
 		if let Some(node) = p {
 			if node.val.is_some() {
-				length = d;
-			}
-			if d == query.len() {
-				return length;
+				*length = d + 1;
 			}
 
 			let c = query.chars().nth(d).unwrap();
-			length = Self::_longest_key(&node.next[c as usize], query, d + 1, length)
+			match c.cmp(&node.c) {
+				Less => Self::_longest_key(&node.left, query, d, length),
+				Greater => Self::_longest_key(&node.right, query, d, length),
+				Equal if d + 1 == query.len() => (),
+				_ => Self::_longest_key(&node.middle, query, d + 1, length),
+			}
 		}
-
-		return length;
 	}
 
 	fn _collect_match_pattern(
@@ -186,24 +212,26 @@ impl<T: Copy> TrieST<T> {
 	) {
 		if let Some(node) = p.as_ref() {
 			let d = cv.len();
-			if d == pattern.len() {
-				if node.val.is_some() {
-					results.push(String::from_iter(cv.iter().cloned()));
-				}
-				return;
+			let c = pattern.chars().nth(d).unwrap();
+
+			if c == '.' || c < node.c {
+				Self::_collect_match_pattern(&node.left, pattern, cv, results);
 			}
 
-			let c = pattern.chars().nth(d).unwrap();
-			if c == '.' {
-				for (i, p) in node.next.iter().enumerate() {
-					cv.push(std::char::from_u32(i as u32).unwrap());
-					Self::_collect_match_pattern(p, pattern, cv, results);
-					cv.pop();
+			if c == '.' || c == node.c {
+				cv.push(node.c);
+				if d + 1 == pattern.len() {
+					if node.val.is_some() {
+						results.push(String::from_iter(cv.iter().cloned()));
+					}
+				} else {
+					Self::_collect_match_pattern(&node.middle, pattern, cv, results);
 				}
-			} else {
-				cv.push(std::char::from_u32(c as u32).unwrap());
-				Self::_collect_match_pattern(&node.next[c as usize], pattern, cv, results);
 				cv.pop();
+			}
+
+			if c == '.' || c > node.c {
+				Self::_collect_match_pattern(&node.right, pattern, cv, results);
 			}
 		}
 	}
@@ -215,14 +243,14 @@ mod tests {
 
 	#[test]
 	fn empty() {
-		let t = TrieST::<usize>::new();
+		let t = TST::<usize>::new();
 		assert_eq!(0, t.size());
 		assert_eq!(true, t.is_empty());
 	}
 
 	#[test]
 	fn put_get_several() {
-		let mut t = TrieST::<f64>::new();
+		let mut t = TST::<f64>::new();
 		t.put("LK", 6.4);
 		t.put("AAPL", 244.93);
 		assert_eq!(2, t.size());
@@ -239,7 +267,7 @@ mod tests {
 
 	#[test]
 	fn update() {
-		let mut t = TrieST::<f64>::new();
+		let mut t = TST::<f64>::new();
 		t.put("LK", 6.4);
 		t.put("AAPL", 244.93);
 		t.put("AAPL", 250.13);
@@ -250,7 +278,7 @@ mod tests {
 
 	#[test]
 	fn delete() {
-		let mut t = TrieST::<f64>::new();
+		let mut t = TST::<f64>::new();
 		t.put("LK", 6.4);
 		t.put("sea", 120.93);
 		t.put("seafood", 150.13);
@@ -299,7 +327,7 @@ mod tests {
 			"are",
 			"surely",
 		];
-		let mut t = TrieST::<usize>::new();
+		let mut t = TST::<usize>::new();
 		for (i, s) in a.iter().enumerate() {
 			t.put(s, i);
 		}
@@ -354,7 +382,7 @@ mod tests {
 			"are",
 			"surely",
 		];
-		let mut t = TrieST::<usize>::new();
+		let mut t = TST::<usize>::new();
 		for (i, s) in a.iter().enumerate() {
 			t.put(s, i);
 		}
@@ -408,7 +436,7 @@ mod tests {
 			"are",
 			"surely",
 		];
-		let mut t = TrieST::<usize>::new();
+		let mut t = TST::<usize>::new();
 		for (i, s) in a.iter().enumerate() {
 			t.put(s, i);
 		}
