@@ -160,11 +160,10 @@ impl<T: Copy> TST<T> {
 				_ => node.middle = self._delete(node.middle.take(), key, d + 1),
 			}
 
-			if node.val.is_some()
-				|| node.left.is_some()
-				|| node.middle.is_some()
-				|| node.right.is_some()
-			{
+			if node.val.is_some() || node.middle.is_some() {
+				Some(node)
+			} else if node.left.is_some() || node.right.is_some() {
+				// TODO: collapse with the `left` or the `right`
 				Some(node)
 			} else {
 				None
