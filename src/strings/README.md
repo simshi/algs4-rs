@@ -22,10 +22,10 @@
   j=5:    abcabd
                ^
   ```
-  while 'c' mismatch with 'd', reset comparison from `i=4` and `j=0` if we use brutal force solution:
+  while 'c' mismatch with 'd', reset comparison from `i=4` and `j=0` if we use a brutal forced solution:
   ```
        012345678901
-  i=4: xyzabcabcabd // begin with 3
+  i=4: xyzabcabcabd // begin with 4
   j=0:     abcabd
            ^
   ```
@@ -36,33 +36,40 @@
   j=2:       abcabd
                ^
   ```
-  2. So the problem is left with building a state-machine like table `next` on event **mismatch**, e.g. "abab"'s `next` array is `[-1, 0, 0, 1]`, while mismatch occurs at `[3]`, we need to reset `j=1`, `-1` means `pattern[0]` would not match `text[i]` either, so advance `i`:
+  2. So the problem is left with building a state-machine like table `next` on event **mismatch**, e.g. "abcabd"'s `next` array must be `[-1, 0, 0, 0, 1, 2]`, while mismatch occurs at `[5]`, we need to reset `j=2`, if mismatch at `[2]`, reset `j=0`:
+  ```
+       01234567890123
+  i=8: xyzabcababcabd
+  j=5:    abcabd  // mismatch at pattern[5], set j=next[5] (i.e. 2)
+               ^
+  j=2:       abcabd // compare text[8] with pattern[2], mismatch, set j=next[2], (i.e. 0)
+               ^
+  j=0:         abcabd // compare text[8] with pattern[0]
+               ^
+  ```
+  essentially, the building algorithm is counting prefix matched with suffix, because it equals to how many chars we've already matched (when mismatch at next char), thus we can skip in further comparisons:
   ```
        0123456789
-  i=6: xyzabaabab
-  j=3:    abab
-             ^
-  j=1:      abab // compare text[6] with pattern[1]
-             ^
+         v
+  j=2: abcabd // prefix "ab..."
+  i=5: abcabd // suffix "...ab"
+            ^
   ```
-  the building algorithm is matching prefix with suffix:
-  ```
-       0123456789
-        v
-  j=1: abab
-  i=3: abab
-          ^
-  ```
-  on above example, `pattern[1] == pattern[3]`, so `j` cover the matched prefix, while `i` tracks the matched suffix, we cant set `next[3] = 1`, here `1` means while `pattern[3]` mismatch target text, how many chars (suffix) matched can be treated as prefix, so we can skip them in further comparisons.
+  on above example, `pattern[0..2] == pattern[3..5] == "ab"`, so `j==2` cover the matched prefix length ("ab".len()==2), so we know `next[5]=2`, which means while `pattern[3]` mismatch target text, the text must be "..abcab?" ('?' is not a 'd'), so next we can try to compare "ab?..." with the pattern, i.e. comapre begins with `i=2`.
 
-  3. Further more, while mismatch on `pattern[3]`, we reset `j=next[3]`, i.e. `1`, which means:
+  3. Further more, while mismatch on `pattern[4]`, if we reset `j=next[4]`, i.e. `1`, which means:
   ```
-       0123456789
-  i=6: xyzabaabab
-  j=1:      abab // compare text[6] with pattern[1]
-             ^
+  let next = [-1, 0, 0, 0, 1, 2];
+       01234567890123
+  i=8: abcaabcabd
+  j=4: abcabd  // mismatch at pattern[4], 'b', set j=next[4] (i.e. 1)
+           ^
+  j=1:    abcabd // compare text[4] with pattern[1], also 'b', set j=next[1] (i.e 0)
+           ^
+  j=0:     abcabd // compare text[4] with pattern[0]
+           ^
   ```
-  but since `pattern[1]==pattern[3]=='b'`, if mismatch `pattern[3]`, it would also mismatch with `pattern[1]`, because `pattern[j]==pattern[next[j]]`. To optimized, we can set `next[i]=next[j]` to advance one more step, when build the `next` table, we should consider this scenario as:
+  but since `pattern[4]==pattern[1]=='b'`, it would not match with `pattern[1]` either. To optimize, we can set `next[i]=next[j]` to advance one more step when build the `next` table, express this scenario as:
   ```rust
 	next[i] = if pattern[i] == pattern[j] {
 		next[j] // equals to previous matched prefix length
@@ -70,21 +77,104 @@
 		j // as normal
 	};
   ```
-  so the final `next` is `[-1, 0, -1, 0]`. Be noticed `next[2]` is `-1`, which means if `pattern[2]` mismatched, the `text[i]` isn't 'a', so it wouldn't match `pattern[0]=='a'`, then we should skip `text[i]`.
+  so the final `next` is `[-1, 0, 0, 0, 0, 2]`, skip comparing the text with `pattern[1]`.
   ```
+  let next = [-1, 0, 0, 0, 0, 2];
+       01234567890123
+  i=8: xyzabcababcabd
+  j=5:    abcabd  // mismatch at pattern[4], 'b', set j=next[4] (now it's 0)
+              ^
+  j=0:        abcabd // compare text[8] with pattern[0]
+              ^
+  ```
+
+  4. Some words on the essence of `-1`, take "abab" as an example, if `pattern[2]` mismatched, the `text[i]` isn't 'a', so we should skip the whole pattern:
+  ```
+  let next = [-1, 0, -1, 0];
        0123456789
   i=2: abcab
   j=2: abab // 'c' mismatch 'a' at [2], set j=-1
          ^
-  // align j=-1 to i=2, as below:
   i=2: abcab
-  j=-1:   abab // continue to loop
+  j=-1:   abab // align j=-1 to i=2, skip the whole pattern
          ^
-  // i.e. align j=0 to i=3, as below:
+  // j+=1, i+=1 i.e. j=0, i=3, as below:
   i=3: abcab
   j=0:    abab // compare text[3] with pattern[0]
           ^
-
+  ```
+  so we can simplify logic as:
+  ```c++
+  for (i=0, j=0; i<n && j<m; ++i, ++j) {
+    while (j>=0 && text[i] != pattern[j]) {
+      j = next[j];
+    }
+    // now j=-1 or text[i]== pattern[j], either way, ++i and ++j move to next
+    // char to compare (or end loop)
+    // ...
+  }
   ```
 
 ## Boyer-Moore Substring Searching
+  1. in short, it compares backwards so it can skip more chars on mismatch. e.g. find "example" in "here is a simple example":
+  ```
+       012345678901234567890123
+  i=0: here is a simple example // comparing pattern[j] with text[i+j]
+  j=6: example // compare backwards, not match, and 's' in not in pattern
+             ^ // skip = j - (-1), i.e. 7
+
+  i=7: here is a simple example // i=0+7
+  j=6:        example // not match, and 'p' == pattern[4]
+                    ^ // skip = j - 4, i.e. 2
+
+  i=9: here is a simple example // i=7+2
+  j=6:          example // align 'p', compare backwards from j=6
+                      ^
+
+  i=9: here is a simple example
+  j=2:          example // not match at j=2, and 'i' is not in pattern
+                  ^     // skip = j - (-1), i.e. 3
+
+  i=12:here is a simple example // i=9+3
+  j=6:             example // not match, 'x' == pattern[1]
+                         ^ // skip = j - 1, i.e. 5
+
+  i=17:here is a simple example // i=12+5
+  j=6:                  example // comparing till find!
+                              ^
+  ```
+  2. above example is only applied bad-char rule, but we can see while 'i' mismatched with 'a', "simple" with "example" has last 4 chars matched, the suffix list is `["mple", "ple", "le", "e"]`, only "e" is matched as a prefix of the pattern, so we can take advantage of it:
+  ```
+       012345678901234567890123
+  i=15:here is a simple example // align 'e' with prefix 'e'
+  j=6:                example // mismatch, 'p' = pattern[4]
+                            ^ // skip = j - 4, i.e. 2
+
+  i=17:here is a simple example // i=15+2
+  j=6:                  example // comparing pattern[j] with text[i+j]
+                              ^
+  ```
+
+## Sunday Substring Searching
+  1. it's a variant of Boyer-Moore algorithm, but it compare forewards, and checks the next char when mismatch, thus skip faster:
+  ```
+  let right[R]:Vec<isize> = ... // position of a char last occurs in the pattern
+  let m = pattern.len(); // 7
+       012345678901234567890123
+  i=0: here is a simple example
+  j=0: example // mismatch on [0], check text[7], right[' ']==-1
+             ^ // skip = m-(-1), i.e. 7+1
+
+  i=8: here is a simple example // i=0+8
+  j=0:         example // mismatch, check text[15], right['e']==6
+               ^ // skip = m-6, i.e. 7-6
+
+  i=9: here is a simple example // i=8+1
+  j=0:          example // mismatch, check text[16], rigth[' ']==-1
+                ^ // skip = m-(-1), i.e. 7+1
+
+  i=17:here is a simple example // i=9+8
+  j=0:                  example // will match
+                        ^
+  ```
+  2. should be a little bit faster and simpler than BM algorithm.
