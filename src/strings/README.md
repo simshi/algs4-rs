@@ -88,7 +88,7 @@
               ^
   ```
 
-  4. Some words on the essence of `-1`, take "abab" as an example, if `pattern[2]` mismatched, the `text[i]` isn't 'a', so we should skip the whole pattern:
+  4. Some words on the essence of `-1`: Indicating to align the `pattern[-1]` with curretn `text[i]`. Take "abab" as an example, while `pattern[2]` mismatched, `pattern[2]==pattern[0]=='a'`, which means set `j=0` wouldn't match either, so we should skip the whole pattern:
   ```
   let next = [-1, 0, -1, 0];
        0123456789
@@ -103,14 +103,14 @@
   j=0:    abab // compare text[3] with pattern[0]
           ^
   ```
-  so we can simplify logic as:
+  then we can simplify the logic as:
   ```c++
   for (i=0, j=0; i<n && j<m; ++i, ++j) {
     while (j>=0 && text[i] != pattern[j]) {
       j = next[j];
     }
-    // now j=-1 or text[i]== pattern[j], either way, ++i and ++j move to next
-    // char to compare (or end loop)
+    // now j=-1 or text[i]==pattern[j], either way, next step must be
+    // ++i and ++j moving to the next position to compare (or end loop)
     // ...
   }
   ```
@@ -143,10 +143,21 @@
   j=6:                  example // comparing till find!
                               ^
   ```
-  2. above example is only applied bad-char rule, but we can see while 'i' mismatched with 'a', "simple" with "example" has last 4 chars matched, the suffix list is `["mple", "ple", "le", "e"]`, only "e" is matched as a prefix of the pattern, so we can take advantage of it:
+  2. `skip` is based on the mismatched char occurs at the **right most position** in the pattern, so we build the right most table as:
+  ``` rust
+  let mut rmt:Vec<isize> = vec![-1; 256];
+  for (i, c) in pattern.chars().enumerate() {
+      rmt[c as usize] = i as isize;
+  }
+  ```
+  3. **Good-char Rule**: above example is only applied bad-char rule, but we can see while 'i' mismatched with 'a', there are last 4 chars matched between "simple" and "example", the suffix list is `["mple", "ple", "le", "e"]`, and "e" is a prefix of the pattern, so we can take advantage of it:
   ```
        012345678901234567890123
-  i=15:here is a simple example // align 'e' with prefix 'e'
+  i=9: here is a simple example
+  j=2:          example // not match at j=2, "e" is a prefix, good-char!
+                  ^     // skip = m-0, i.e. 6
+
+  i=15:here is a simple example // i=9+6, align 'e' with prefix 'e'
   j=6:                example // mismatch, 'p' = pattern[4]
                             ^ // skip = j - 4, i.e. 2
 
@@ -158,19 +169,19 @@
 ## Sunday Substring Searching
   1. it's a variant of Boyer-Moore algorithm, but it compare forewards, and checks the next char when mismatch, thus skip faster:
   ```
-  let right[R]:Vec<isize> = ... // position of a char last occurs in the pattern
+  let right[R]:Vec<isize> = ... // last position of a char occurs in the pattern
   let m = pattern.len(); // 7
        012345678901234567890123
   i=0: here is a simple example
-  j=0: example // mismatch on [0], check text[7], right[' ']==-1
+  j=0: example // mismatch on [0], check text[0+7], right[' ']==-1
              ^ // skip = m-(-1), i.e. 7+1
 
   i=8: here is a simple example // i=0+8
-  j=0:         example // mismatch, check text[15], right['e']==6
+  j=0:         example // mismatch, check text[8+7], right['e']==6
                ^ // skip = m-6, i.e. 7-6
 
   i=9: here is a simple example // i=8+1
-  j=0:          example // mismatch, check text[16], rigth[' ']==-1
+  j=0:          example // mismatch, check text[9+7], rigth[' ']==-1
                 ^ // skip = m-(-1), i.e. 7+1
 
   i=17:here is a simple example // i=9+8
