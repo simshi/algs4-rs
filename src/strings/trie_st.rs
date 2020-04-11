@@ -32,11 +32,11 @@ impl<T> Node<T> {
 	}
 }
 
-pub struct TrieST<T: Copy> {
+pub struct TrieST<T> {
 	root: NodePtr<T>,
 	n: usize,
 }
-impl<T: Copy> TrieST<T> {
+impl<T> TrieST<T> {
 	pub fn new() -> Self {
 		Self { root: None, n: 0 }
 	}
@@ -87,7 +87,7 @@ impl<T: Copy> TrieST<T> {
 }
 
 // private methods
-impl<T: Copy> TrieST<T> {
+impl<T> TrieST<T> {
 	fn _get_node<'a>(p: &'a NodePtr<T>, key: &str, d: usize) -> &'a NodePtr<T> {
 		if let Some(node) = p {
 			if d < key.len() {

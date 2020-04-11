@@ -12,7 +12,7 @@
 
 ## Ternary Searching Trie
   - deletion node has complexity.
-  - one todo: when deleting a node with no middle pointer, better to collapse it with the `left` or `right`.
+  - after deletion, if a node has no value and no middle child, it should collapse with its left or right sub-tree, but I collapse if there was only one of them, i.e. if both left and right child exist, keep it no change. Ideally, to avoid all unneccessary layer, we must implement it like a Red Black Tree, but it's too complicated. Or maybe we can flattern when inserting, to make sure left child has no right child (and right child has no left child).
 
 ## KMP Substring Searching
   1. e.g. find **pattern** "abcabd" in **text** "xyzabcabcabd":

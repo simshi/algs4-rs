@@ -100,6 +100,10 @@ impl<T: Copy> TST<T> {
 		}
 		results.into_iter()
 	}
+
+	pub fn iter(&self) -> Iter<'_, T> {
+		Iter::new(&self.root)
+	}
 }
 
 // private methods
@@ -162,11 +166,12 @@ impl<T: Copy> TST<T> {
 
 			if node.val.is_some() || node.middle.is_some() {
 				Some(node)
-			} else if node.left.is_some() || node.right.is_some() {
-				// TODO: collapse with the `left` or the `right`
-				Some(node)
 			} else {
-				None
+				match (&node.left, &node.right) {
+					(_, None) => node.left,
+					(None, _) => node.right,
+					(Some(_), Some(_)) => Some(node),
+				}
 			}
 		})
 	}
@@ -233,6 +238,54 @@ impl<T: Copy> TST<T> {
 				Self::_collect_match_pattern(&node.right, pattern, cv, results);
 			}
 		}
+	}
+}
+
+enum Branch {
+	Root,
+	Left(char),
+	Middle(char),
+	Right(char),
+}
+impl std::fmt::Display for Branch {
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+		let v = match self {
+			Branch::Root => String::from("T"),
+			Branch::Left(c) => format!("{}->L", c),
+			Branch::Middle(c) => format!("{}->", c),
+			Branch::Right(c) => format!("{}->R", c),
+		};
+		write!(f, "{}", v)
+	}
+}
+pub struct Iter<'a, T> {
+	stack: Vec<(&'a NodePtr<T>, Branch, usize)>,
+}
+impl<'a, T> Iter<'a, T> {
+	fn new(p: &'a NodePtr<T>) -> Self {
+		let mut stack = Vec::new();
+		stack.push((p, Branch::Root, 0));
+		Self { stack }
+	}
+}
+impl<'a, T> Iterator for Iter<'a, T> {
+	type Item = String;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		while let Some((p, br, d)) = self.stack.pop() {
+			if p.is_none() {
+				continue;
+			}
+			let node = p.as_ref().unwrap();
+			let v = format!("{}:{}:{}", br, d, node.c);
+			self.stack.push((&node.right, Branch::Right(node.c), d));
+			self.stack.push((&node.left, Branch::Left(node.c), d));
+			self.stack
+				.push((&node.middle, Branch::Middle(node.c), d + 1));
+			return Some(v);
+		}
+
+		None
 	}
 }
 
@@ -452,5 +505,99 @@ mod tests {
 			Some(String::from("seashells")),
 			t.longest_key_of("seashellsabc")
 		);
+	}
+
+	#[test]
+	fn delete_with_one_child() {
+		let mut t = TST::<usize>::new();
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(0, a.len());
+
+		t.put("shell", 95);
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(vec!["T:0:s", "s->:1:h", "h->:2:e", "e->:3:l", "l->:4:l"], a);
+
+		t.put("sea", 990);
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(
+			vec!["T:0:s", "s->:1:h", "h->:2:e", "e->:3:l", "l->:4:l", "h->L:1:e", "e->:2:a"],
+			a
+		);
+
+		t.put("shore", 123);
+		//     s
+		// e - h
+		// a   e - o
+		//     l   r
+		//     l   e
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(
+			vec![
+				"T:0:s", "s->:1:h", "h->:2:e", "e->:3:l", "l->:4:l", "e->R:2:o", "o->:3:r",
+				"r->:4:e", "h->L:1:e", "e->:2:a"
+			],
+			a
+		);
+
+		t.delete("shell");
+		// collapse 'e' in "she" by right tree
+		//     s            s
+		// e - h        e - h
+		// a   e - o => a   o
+		//         r        r
+		//         e        e
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(
+			vec!["T:0:s", "s->:1:h", "h->:2:o", "o->:3:r", "r->:4:e", "h->L:1:e", "e->:2:a"],
+			a
+		);
+
+		t.delete("shore");
+		// collapse 'h' in "sh" by left tree
+		//     s    s
+		// e - h => e
+		// a        a
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(vec!["T:0:s", "s->:1:e", "e->:2:a"], a);
+	}
+
+	#[test]
+	fn delete_with_both_left_and_right_exist() {
+		let mut t = TST::<usize>::new();
+
+		t.put("she", 88);
+		t.put("sea", 1230);
+		t.put("sold", 230);
+		//     s
+		// e - h - o
+		// a   e   l
+		//         d
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(
+			vec![
+				"T:0:s", "s->:1:h", "h->:2:e", "h->L:1:e", "e->:2:a", "h->R:1:o", "o->:2:l",
+				"l->:3:d"
+			],
+			a
+		);
+
+		t.delete("she");
+		//     s
+		// e - h - o
+		// a       l
+		//         d
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(
+			vec!["T:0:s", "s->:1:h", "h->L:1:e", "e->:2:a", "h->R:1:o", "o->:2:l", "l->:3:d"],
+			a
+		);
+
+		t.delete("sold");
+		// now, it can collapse
+		//     s    s
+		// e - h => e
+		// a        a
+		let a = t.iter().collect::<Vec<_>>();
+		assert_eq!(vec!["T:0:s", "s->:1:e", "e->:2:a"], a);
 	}
 }
