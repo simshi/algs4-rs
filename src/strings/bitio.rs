@@ -21,43 +21,48 @@ impl MemBitIO {
 			w: 0,
 		}
 	}
+
+	fn read_on_safe(&mut self, len: usize) -> usize {
+		// assert!(len <= MAX_BITS - 8);
+		let mut radix = 1;
+		let mut result: usize = 0;
+		for i in (self.r / 8)..((self.r + len + 7) / 8) {
+			result += (self.buf[i] as usize) * radix;
+			radix *= 0x100;
+		}
+		result >>= self.r % 8;
+
+		self.r += len;
+		if self.r == self.w {
+			self.r = 0;
+			self.w = 0;
+			self.buf.clear();
+		}
+
+		result & ((1 << len) - 1)
+	}
 }
 impl BitReader for MemBitIO {
 	fn read(&mut self, len: usize) -> Option<usize> {
-		println!("read:r={},len={},w={}", self.r, len, self.w);
-		if len > MAX_BITS || self.r + len > self.w {
+		if len == 0 || len > MAX_BITS || self.r + len > self.w {
 			return None;
 		}
 
-		let n = (self.r + len) / 8 - (self.r / 8);
-		let hi = (self.r + len) % 8;
-		// within one byte
-		println!("read:n={}", n);
-		if n == 0 {
-			let mut b = (self.buf[self.r / 8] as usize) & ((1 << hi) - 1);
-			println!("read:{},b={}", self.r, b);
-			b >>= self.r % 8;
-			self.r += len;
-			return Some(b);
+		let n = if len <= MAX_BITS / 2 {
+			len
+		} else {
+			len - MAX_BITS / 2
+		};
+		let mut result = self.read_on_safe(n);
+		if n < len {
+			result += self.read_on_safe(len - n) * (1 << (MAX_BITS / 2));
 		}
-
-		let mut result: usize = 0;
-		for i in 0..n {
-			result = result * 0x100 + (self.buf[self.r / 8 + i] as usize);
-		}
-		result >>= self.r % 8;
-		self.r += n * 8;
-
-		let last = (self.buf[self.r / 8] as usize) & ((1 << hi) - 1);
-		result += last << (len - hi);
-		self.r += hi;
 
 		Some(result)
 	}
 }
 impl BitWriter for MemBitIO {
 	fn write(&mut self, val: usize, len: usize) {
-		println!("write:len={},size={}", len, MAX_BITS);
 		if len == 0 || len > MAX_BITS {
 			return;
 		}
@@ -65,24 +70,19 @@ impl BitWriter for MemBitIO {
 			self.buf.push(0);
 		}
 
-		let n = (self.w + len) / 8 - (self.w / 8);
-		println!("write:w={},n={}", self.w, n);
-		if n == 0 {
-			let val = val << (self.w % 8);
-			println!("write:{}<={}", self.w, val);
-			self.buf[self.w / 8] += val as u8;
-			self.w += len;
-			return;
-		}
+		let val = if len < MAX_BITS {
+			val & ((1 << len) - 1) // clear unused MSB
+		} else {
+			val
+		};
 
-		let head = 8 - self.w % 8;
-		let first = val & ((1 << head) - 1);
-		println!("write:head={},first={}", head, first);
-		self.buf[self.w / 8] += first as u8;
-		self.w += head;
-		let mut val = val >> head;
-		let mut remain = len - head;
-		println!("write:remain={}", remain);
+		let first = (val << (self.w % 8)) & 0xff;
+		self.buf[self.w / 8] |= first as u8;
+
+		let n_first = 8 - self.w % 8;
+		let nw = if len < n_first { len } else { n_first };
+		let mut val = val >> nw;
+		let mut remain = len - nw;
 		while remain > 0 {
 			self.buf.push((val & 0xff) as u8);
 			if remain >= 8 {
@@ -92,7 +92,8 @@ impl BitWriter for MemBitIO {
 				break;
 			};
 		}
-		self.w += len - head;
+
+		self.w += len;
 	}
 }
 
@@ -116,6 +117,19 @@ mod tests {
 		assert_eq!(None, io.read(12));
 		assert_eq!(Some(0x3ff), io.read(10));
 		assert_eq!(Some(1), io.read(1));
+		assert_eq!(None, io.read(1));
+	}
+
+	#[test]
+	fn value_exceeds_len() {
+		let mut io = MemBitIO::new();
+		io.write(0x7, 1);
+		assert_eq!(None, io.read(3));
+		assert_eq!(Some(1), io.read(1));
+		assert_eq!(None, io.read(1));
+
+		io.write(0x7ff, 8);
+		assert_eq!(Some(0xff), io.read(8));
 		assert_eq!(None, io.read(1));
 	}
 }
