@@ -1,3 +1,4 @@
+pub mod bitio;
 pub mod kmp;
 pub mod msd_sort;
 pub mod sunday;
