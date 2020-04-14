@@ -189,3 +189,8 @@
                         ^
   ```
   2. should be a little bit faster and simpler than BM algorithm.
+
+## Huffman Coding Compression
+  - theory: decoding without ambiguity by **Prefix Rule** (only leaf nodes have coding points).
+  - coding: use `enum Kind` to express node clearly.
+  - coding: (TODO) `prefix:Vec<u8>` expressing 1 bit per element, can be compressed.

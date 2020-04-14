@@ -1,5 +1,5 @@
 pub fn kmp_search(text: &str, pattern: &str) -> Option<usize> {
-	if text.len() == 0 || pattern.len() == 0 {
+	if text.is_empty() || pattern.is_empty() {
 		return None;
 	}
 

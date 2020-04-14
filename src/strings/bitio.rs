@@ -8,6 +8,7 @@ pub trait BitWriter {
 }
 
 // LSB
+#[derive(Default)]
 pub struct MemBitIO {
 	buf: Vec<u8>,
 	r: usize,
@@ -15,11 +16,16 @@ pub struct MemBitIO {
 }
 impl MemBitIO {
 	pub fn new() -> Self {
-		Self {
-			buf: Vec::new(),
-			r: 0,
-			w: 0,
-		}
+		Default::default()
+	}
+	pub fn len_in_bits(&self) -> usize {
+		self.w - self.r
+	}
+	pub fn len(&self) -> usize {
+		(self.len_in_bits() + 7) / 8
+	}
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
 	}
 
 	fn read_on_safe(&mut self, len: usize) -> usize {
@@ -41,11 +47,28 @@ impl MemBitIO {
 
 		result & ((1 << len) - 1)
 	}
+
+	fn read_bit(&mut self) -> usize {
+		let bit = self.buf[self.r / 8] & (1 << (self.r % 8));
+		self.r += 1;
+		(bit != 0) as usize
+	}
+	fn write_bit(&mut self, val: usize) {
+		if val != 0 {
+			self.buf[self.w / 8] |= 1 << (self.w % 8);
+		}
+		self.w += 1;
+	}
 }
 impl BitReader for MemBitIO {
 	fn read(&mut self, len: usize) -> Option<usize> {
 		if len == 0 || len > MAX_BITS || self.r + len > self.w {
 			return None;
+		}
+
+		// fast path
+		if len == 1 {
+			return Some(self.read_bit());
 		}
 
 		let n = if len <= MAX_BITS / 2 {
@@ -75,6 +98,12 @@ impl BitWriter for MemBitIO {
 		} else {
 			val
 		};
+
+		// fast path
+		if len == 1 {
+			self.write_bit(val);
+			return;
+		}
 
 		let first = (val << (self.w % 8)) & 0xff;
 		self.buf[self.w / 8] |= first as u8;

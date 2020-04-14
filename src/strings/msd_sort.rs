@@ -43,8 +43,8 @@ impl MSD {
 		self.count.resize(self.count.capacity(), 0);
 
 		// frequency counts of char
-		for i in lo..hi {
-			self.count[Self::str_char_at(a[i], d)] += 1;
+		for s in a.iter().take(hi).skip(lo) {
+			self.count[Self::str_char_at(s, d)] += 1;
 		}
 
 		// accumulate counts to indicies
