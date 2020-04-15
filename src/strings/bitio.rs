@@ -28,6 +28,17 @@ impl MemBitIO {
 		self.len() == 0
 	}
 
+	pub fn from_buffer(buf: &[u8]) -> Self {
+		Self {
+			buf: buf.iter().cloned().collect(),
+			r: 0,
+			w: buf.len() * 8,
+		}
+	}
+	pub fn dump(&self) -> Vec<u8> {
+		self.buf.clone()
+	}
+
 	fn read_on_safe(&mut self, len: usize) -> usize {
 		// assert!(len <= MAX_BITS - 8);
 		let mut radix = 1;

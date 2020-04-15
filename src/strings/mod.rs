@@ -1,7 +1,9 @@
 pub mod bitio;
 pub mod huffman;
 pub mod kmp;
+pub mod lzw;
 pub mod msd_sort;
 pub mod sunday;
 pub mod trie_st;
 pub mod tst;
+pub mod tst_u8;

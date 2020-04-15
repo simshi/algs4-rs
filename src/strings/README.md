@@ -1,5 +1,9 @@
 # Strings
 
+## TODO
+  - replace `.chars()` with `.as_bytes()` to make some algorithms work on non-ASCII characters.
+  - should return `Result` in some interfaces.
+
 ## Sorting
   - MSD
     - Since string is Unicoded in Rust, use `chars()` instead.
@@ -194,3 +198,8 @@
   - theory: decoding without ambiguity by **Prefix Rule** (only leaf nodes have coding points).
   - coding: use `enum Kind` to express node clearly.
   - coding: (TODO) `prefix:Vec<u8>` expressing 1 bit per element, can be compressed.
+
+## LZW
+  - `char` is 32-bit wide, so we must use `u8` instead to compress and decompress.
+  - `TST::longest_key_of` makes code simple, comparing with extending the key one byte by one byte and then search in a dictionary.
+  - specical case `symbol == st.len()` in decompression, consider a pattern `x.*x.*x` (two `.*` substrings are same), after compress `x.*`, `x.*x` would be added to the dictionary, then the following `x.*x` would use this symbol immediately. But while decompressing met the symbol, `x.*x` is not in the dictionary yet, that's where the special case comes from, or in short, decompressing is one step slower than compressing.

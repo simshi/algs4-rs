@@ -188,6 +188,11 @@ mod tests {
 		assert_eq!(13, io.len());
 		assert_eq!(Ok("aaabbc".into()), decompress(&mut io));
 
+		let all_unique = "abcdefghijklmnopqrstuvwxyz";
+		compress(all_unique, &mut io);
+		assert_eq!(56, io.len());
+		assert_eq!(Ok(all_unique.into()), decompress(&mut io));
+
 		let s = "this is an example for huffman encoding";
 		compress(s, &mut io);
 		assert_eq!(52, io.len());
