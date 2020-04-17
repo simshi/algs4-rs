@@ -60,12 +60,26 @@ fn new_symbol_tst() -> TST<usize> {
 	let mut tst = TST::new();
 
 	let mut w = vec![0u8; 1];
-	for i in 0..R {
-		w[0] = i as u8;
-		tst.put(&w, i);
-	}
+	// Optimize to balance the TST, otherwise it's height is 256
+	// for i in 0..R {
+	// 	w[0] = i as u8;
+	// 	tst.put(&w, i);
+	// }
+	put_range(&mut tst, &mut w, 0, R);
 
 	tst
+}
+fn put_range(tst: &mut TST<usize>, w: &mut Vec<u8>, lo: usize, hi: usize) {
+	let i = lo + (hi - lo) / 2;
+	w[0] = i as u8;
+	tst.put(&w, i);
+
+	if lo < i {
+		put_range(tst, w, lo, i);
+	}
+	if i + 1 < hi {
+		put_range(tst, w, i + 1, hi);
+	}
 }
 
 #[cfg(test)]
@@ -108,6 +122,14 @@ mod tests {
 		let v = s.as_bytes().iter().cloned().collect::<Vec<_>>();
 		let r = compress(s.as_bytes());
 		// assert!(r.len() < s.len()); // 39 > 26
+		assert_eq!(v, decompress(&r).ok().unwrap());
+	}
+
+	#[test]
+	fn non_string() {
+		let v: Vec<u8> = vec![0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
+		let r = compress(&v[..]);
+		assert_eq!(9, r.len());
 		assert_eq!(v, decompress(&r).ok().unwrap());
 	}
 }

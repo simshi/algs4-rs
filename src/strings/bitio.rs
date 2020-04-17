@@ -35,8 +35,8 @@ impl MemBitIO {
 			w: buf.len() * 8,
 		}
 	}
-	pub fn dump(&self) -> Vec<u8> {
-		self.buf.clone()
+	pub fn dump(self) -> Vec<u8> {
+		self.buf
 	}
 
 	fn read_on_safe(&mut self, len: usize) -> usize {

@@ -13,10 +13,12 @@
 ## Trie Tree
   - similar with BST, pass ownship of `NodePtr` to function and return back it.
   - delete current node (by returning `None` to upper layer) when current node has no value stored and `next` is empty: `node.next.iter().all(|p| p.is_none())`
+  - use `u8` instead of `char` due to `next` is full for each node, maybe we can use `char` with `HashMap` or `BTreeMap`? all about balance between space and time.
 
 ## Ternary Searching Trie
   - deletion node has complexity.
   - after deletion, if a node has no value and no middle child, it should collapse with its left or right sub-tree, but I collapse if there was only one of them, i.e. if both left and right child exist, keep it no change. Ideally, to avoid all unneccessary layer, we must implement it like a Red Black Tree, but it's too complicated. Or maybe we can flattern when inserting, to make sure left child has no right child (and right child has no left child).
+  - Since `char` support unicode (32-bit, different with C/C++/Java), it has smaller height in unicode scenario. But in LZW, it require `u8` since some chars are even not valid Unicode char, like '\0'.
 
 ## KMP Substring Searching
   1. e.g. find **pattern** "abcabd" in **text** "xyzabcabcabd":
@@ -198,8 +200,29 @@
   - theory: decoding without ambiguity by **Prefix Rule** (only leaf nodes have coding points).
   - coding: use `enum Kind` to express node clearly.
   - coding: (TODO) `prefix:Vec<u8>` expressing 1 bit per element, can be compressed.
+  - coding: (TODO) can support non-ASCII by replacing `char` with `u8`
 
 ## LZW
   - `char` is 32-bit wide, so we must use `u8` instead to compress and decompress.
   - `TST::longest_key_of` makes code simple, comparing with extending the key one byte by one byte and then search in a dictionary.
   - specical case `symbol == st.len()` in decompression, consider a pattern `x.*x.*x` (two `.*` substrings are same), after compress `x.*`, `x.*x` would be added to the dictionary, then the following `x.*x` would use this symbol immediately. But while decompressing met the symbol, `x.*x` is not in the dictionary yet, that's where the special case comes from, or in short, decompressing is one step slower than compressing.
+  - Optimization: init TST has height 256 if inserted (0..255) by order, it's because TST has no auto-balance. As a workaround insert them recursively in the order "middle one, left partition, right partition", results in a height 9 (2^8=256).
+  - If input is a read stream (processing input iteratively):
+  ```rust
+  let mut word = Vec::new();
+  let buf_len = 2;
+  for &c in input {
+    word.push(c);
+    if word.len() < buf_len {
+      continue;
+    }
+
+    // now word contains a word longer than any key in tst
+    let n = tst.longest_key_of(&word[..]);
+    if buf_len < n + 1 {
+      buf_len = n + 1;
+    }
+    // ... other logic
+    word.drain(..n);
+  }
+  ```

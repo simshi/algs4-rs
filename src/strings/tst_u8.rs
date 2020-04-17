@@ -84,7 +84,25 @@ impl<T: Copy> TST<T> {
 		}
 
 		let mut max_length = 0;
-		Self::_longest_key(&self.root, prefix, 0, &mut max_length);
+		let mut d = 0;
+		let mut p = &self.root;
+		while let Some(node) = p {
+			match prefix[d].cmp(&node.b) {
+				Less => p = &node.left,
+				Greater => p = &node.right,
+				Equal => {
+					d += 1;
+					if node.val.is_some() {
+						max_length = d;
+					}
+					if d == prefix.len() {
+						break;
+					}
+					p = &node.middle;
+				}
+			}
+		}
+
 		max_length
 	}
 
@@ -174,27 +192,6 @@ impl<T: Copy> TST<T> {
 			Self::_collect(&node.middle, cv, results);
 			cv.pop();
 			Self::_collect(&node.right, cv, results);
-		}
-	}
-
-	fn _longest_key(p: &NodePtr<T>, query: &[u8], d: usize, length: &mut usize) {
-		// TODO: replace recursion with loop
-		if let Some(node) = p {
-			match query[d].cmp(&node.b) {
-				Less => Self::_longest_key(&node.left, query, d, length),
-				Greater => Self::_longest_key(&node.right, query, d, length),
-				Equal if d + 1 == query.len() => {
-					if node.val.is_some() {
-						*length = d + 1;
-					}
-				}
-				_ => {
-					if node.val.is_some() {
-						*length = d + 1;
-					}
-					Self::_longest_key(&node.middle, query, d + 1, length)
-				}
-			}
 		}
 	}
 }

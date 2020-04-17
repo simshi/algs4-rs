@@ -1,5 +1,3 @@
-use std::iter::FromIterator;
-
 const R: usize = 256;
 
 struct Node<T> {
@@ -47,39 +45,40 @@ impl<T> TrieST<T> {
 		self.size() == 0
 	}
 
-	pub fn get(&self, key: &str) -> Option<&T> {
+	pub fn get(&self, key: &[u8]) -> Option<&T> {
 		Self::_get_node(&self.root, key, 0)
 			.as_ref()
 			.and_then(|node| node.val.as_ref())
 	}
-	pub fn put(&mut self, key: &str, val: T) {
+	pub fn put(&mut self, key: &[u8], val: T) {
 		let p = self.root.take();
 		self.root = self._put(p, key, val, 0);
 	}
-	pub fn delete(&mut self, key: &str) {
+	pub fn delete(&mut self, key: &[u8]) {
 		let p = self.root.take();
 		self.root = self._delete(p, key, 0);
 	}
 
-	pub fn keys_with_prefix(&self, prefix: &str) -> impl Iterator<Item = String> {
+	pub fn keys_with_prefix(&self, prefix: &[u8]) -> impl Iterator<Item = Vec<u8>> {
 		let mut results = Vec::new();
 		let p = Self::_get_node(&self.root, prefix, 0);
-		let mut cv = prefix.chars().collect::<Vec<_>>();
+		let mut cv = prefix.iter().cloned().collect::<Vec<_>>();
 		Self::_collect(p, &mut cv, &mut results);
 
 		results.into_iter()
 	}
-	pub fn longest_key_of(&self, prefix: &str) -> Option<String> {
-		let max_length = Self::_longest_key(&self.root, prefix, 0, 0);
+	pub fn longest_key_of(&self, prefix: &[u8]) -> Option<usize> {
+		let mut max_length = 0;
+		Self::_longest_key(&self.root, prefix, 0, &mut max_length);
 		if max_length == 0 {
 			None
 		} else {
-			Some(String::from(&prefix[..max_length]))
+			Some(max_length)
 		}
 	}
-	pub fn keys_match_pattern(&self, pattern: &str) -> impl Iterator<Item = String> {
+	pub fn keys_match_pattern(&self, pattern: &[u8]) -> impl Iterator<Item = Vec<u8>> {
 		let mut results = Vec::new();
-		let mut cv: Vec<char> = Vec::new();
+		let mut cv = Vec::new();
 		Self::_collect_match_pattern(&self.root, pattern, &mut cv, &mut results);
 
 		results.into_iter()
@@ -88,18 +87,18 @@ impl<T> TrieST<T> {
 
 // private methods
 impl<T> TrieST<T> {
-	fn _get_node<'a>(p: &'a NodePtr<T>, key: &str, d: usize) -> &'a NodePtr<T> {
+	fn _get_node<'a>(p: &'a NodePtr<T>, key: &[u8], d: usize) -> &'a NodePtr<T> {
 		if let Some(node) = p {
 			if d < key.len() {
-				let c = key.chars().nth(d).unwrap();
-				return Self::_get_node(&node.next[c as usize], key, d + 1);
+				let c = key[d] as usize;
+				return Self::_get_node(&node.next[c], key, d + 1);
 			}
 		}
 
 		p
 	}
 
-	fn _put(&mut self, p: NodePtr<T>, key: &str, val: T, d: usize) -> NodePtr<T> {
+	fn _put(&mut self, p: NodePtr<T>, key: &[u8], val: T, d: usize) -> NodePtr<T> {
 		let mut is_new = false;
 		let mut node = match p {
 			Some(node) => node,
@@ -118,14 +117,14 @@ impl<T> TrieST<T> {
 			return Some(node);
 		}
 
-		let c = key.chars().nth(d).unwrap();
-		let pc = node.next[c as usize].take();
-		node.next[c as usize] = self._put(pc, key, val, d + 1);
+		let c = key[d] as usize;
+		let pc = node.next[c].take();
+		node.next[c] = self._put(pc, key, val, d + 1);
 
 		Some(node)
 	}
 
-	fn _delete(&mut self, p: NodePtr<T>, key: &str, d: usize) -> NodePtr<T> {
+	fn _delete(&mut self, p: NodePtr<T>, key: &[u8], d: usize) -> NodePtr<T> {
 		p.and_then(|mut node| {
 			if d == key.len() {
 				if node.val.is_some() {
@@ -133,9 +132,9 @@ impl<T> TrieST<T> {
 					node.val = None;
 				}
 			} else {
-				let c = key.chars().nth(d).unwrap();
-				let pc = node.next[c as usize].take();
-				node.next[c as usize] = self._delete(pc, key, d + 1);
+				let c = key[d] as usize;
+				let pc = node.next[c].take();
+				node.next[c] = self._delete(pc, key, d + 1);
 			}
 
 			if node.val.is_some() || node.next.iter().any(|p| p.is_some()) {
@@ -146,15 +145,15 @@ impl<T> TrieST<T> {
 		})
 	}
 
-	fn _collect(p: &NodePtr<T>, cv: &mut Vec<char>, results: &mut Vec<String>) {
+	fn _collect(p: &NodePtr<T>, cv: &mut Vec<u8>, results: &mut Vec<Vec<u8>>) {
 		if let Some(node) = p.as_ref() {
 			if node.val.is_some() {
-				results.push(String::from_iter(cv.iter().cloned()));
+				results.push(cv.clone());
 			}
 
 			for (i, p) in node.next.iter().enumerate() {
 				if p.is_some() {
-					cv.push(std::char::from_u32(i as u32).unwrap());
+					cv.push(i as u8);
 					Self::_collect(p, cv, results);
 					cv.pop();
 				}
@@ -162,46 +161,44 @@ impl<T> TrieST<T> {
 		}
 	}
 
-	fn _longest_key(p: &NodePtr<T>, query: &str, d: usize, mut length: usize) -> usize {
+	fn _longest_key(p: &NodePtr<T>, query: &[u8], d: usize, length: &mut usize) {
 		if let Some(node) = p {
 			if node.val.is_some() {
-				length = d;
+				*length = d;
 			}
 			if d == query.len() {
-				return length;
+				return;
 			}
 
-			let c = query.chars().nth(d).unwrap();
-			length = Self::_longest_key(&node.next[c as usize], query, d + 1, length)
+			let c = query[d] as usize;
+			Self::_longest_key(&node.next[c], query, d + 1, length);
 		}
-
-		return length;
 	}
 
 	fn _collect_match_pattern(
 		p: &NodePtr<T>,
-		pattern: &str,
-		cv: &mut Vec<char>,
-		results: &mut Vec<String>,
+		pattern: &[u8],
+		cv: &mut Vec<u8>,
+		results: &mut Vec<Vec<u8>>,
 	) {
 		if let Some(node) = p.as_ref() {
 			let d = cv.len();
 			if d == pattern.len() {
 				if node.val.is_some() {
-					results.push(String::from_iter(cv.iter().cloned()));
+					results.push(cv.clone());
 				}
 				return;
 			}
 
-			let c = pattern.chars().nth(d).unwrap();
-			if c == '.' {
+			let c = pattern[d];
+			if c == '.' as u8 {
 				for (i, p) in node.next.iter().enumerate() {
-					cv.push(std::char::from_u32(i as u32).unwrap());
+					cv.push(i as u8);
 					Self::_collect_match_pattern(p, pattern, cv, results);
 					cv.pop();
 				}
 			} else {
-				cv.push(std::char::from_u32(c as u32).unwrap());
+				cv.push(c);
 				Self::_collect_match_pattern(&node.next[c as usize], pattern, cv, results);
 				cv.pop();
 			}
@@ -223,67 +220,77 @@ mod tests {
 	#[test]
 	fn put_get_several() {
 		let mut t = TrieST::<f64>::new();
-		t.put("LK", 6.4);
-		t.put("AAPL", 244.93);
+		t.put("LK".as_bytes(), 6.4);
+		t.put("AAPL".as_bytes(), 244.93);
 		assert_eq!(2, t.size());
 
-		assert_eq!(None, t.get("MSFT"));
-		assert_eq!(Some(&244.93), t.get("AAPL"));
-		assert_eq!(Some(&6.4), t.get("LK"));
+		assert_eq!(None, t.get("MSFT".as_bytes()));
+		assert_eq!(Some(&244.93), t.get("AAPL".as_bytes()));
+		assert_eq!(Some(&6.4), t.get("LK".as_bytes()));
 
-		assert_eq!(None, t.get("AAP"));
-		assert_eq!(None, t.get("AA"));
-		assert_eq!(None, t.get("A"));
-		assert_eq!(None, t.get("L"));
+		assert_eq!(None, t.get("AAP".as_bytes()));
+		assert_eq!(None, t.get("AA".as_bytes()));
+		assert_eq!(None, t.get("A".as_bytes()));
+		assert_eq!(None, t.get("L".as_bytes()));
 	}
 
 	#[test]
 	fn update() {
 		let mut t = TrieST::<f64>::new();
-		t.put("LK", 6.4);
-		t.put("AAPL", 244.93);
-		t.put("AAPL", 250.13);
+		t.put("LK".as_bytes(), 6.4);
+		t.put("AAPL".as_bytes(), 244.93);
+		t.put("AAPL".as_bytes(), 250.13);
 
-		assert_eq!(Some(&6.4), t.get("LK"));
-		assert_eq!(Some(&250.13), t.get("AAPL"));
+		assert_eq!(Some(&6.4), t.get("LK".as_bytes()));
+		assert_eq!(Some(&250.13), t.get("AAPL".as_bytes()));
+	}
+
+	#[test]
+	fn unicode() {
+		let mut t = TrieST::<f64>::new();
+		t.put("LK瑞幸".as_bytes(), 6.4);
+		t.put("AAPL苹果".as_bytes(), 244.93);
+
+		assert_eq!(Some(&6.4), t.get("LK瑞幸".as_bytes()));
+		assert_eq!(Some(&244.93), t.get("AAPL苹果".as_bytes()));
 	}
 
 	#[test]
 	fn delete() {
 		let mut t = TrieST::<f64>::new();
-		t.put("LK", 6.4);
-		t.put("sea", 120.93);
-		t.put("seafood", 150.13);
-		t.put("seashell", 250.13);
-		t.put("seashells", 50.13);
+		t.put("LK".as_bytes(), 6.4);
+		t.put("sea".as_bytes(), 120.93);
+		t.put("seafood".as_bytes(), 150.13);
+		t.put("seashell".as_bytes(), 250.13);
+		t.put("seashells".as_bytes(), 50.13);
 
 		// delete middle
-		t.delete("seashell");
-		assert_eq!(None, t.get("seashell"));
-		assert_eq!(Some(&120.93), t.get("sea"));
-		assert_eq!(Some(&150.13), t.get("seafood"));
-		assert_eq!(Some(&50.13), t.get("seashells"));
-		assert_eq!(Some(&6.4), t.get("LK"));
+		t.delete("seashell".as_bytes());
+		assert_eq!(None, t.get("seashell".as_bytes()));
+		assert_eq!(Some(&120.93), t.get("sea".as_bytes()));
+		assert_eq!(Some(&150.13), t.get("seafood".as_bytes()));
+		assert_eq!(Some(&50.13), t.get("seashells".as_bytes()));
+		assert_eq!(Some(&6.4), t.get("LK".as_bytes()));
 
 		// delete leaf which has parent
-		t.delete("seafood");
-		assert_eq!(None, t.get("seafood"));
-		assert_eq!(Some(&50.13), t.get("seashells"));
-		assert_eq!(Some(&120.93), t.get("sea"));
-		assert_eq!(Some(&6.4), t.get("LK"));
+		t.delete("seafood".as_bytes());
+		assert_eq!(None, t.get("seafood".as_bytes()));
+		assert_eq!(Some(&50.13), t.get("seashells".as_bytes()));
+		assert_eq!(Some(&120.93), t.get("sea".as_bytes()));
+		assert_eq!(Some(&6.4), t.get("LK".as_bytes()));
 
 		// delete parent
-		t.delete("sea");
-		assert_eq!(None, t.get("sea"));
-		assert_eq!(None, t.get("seafood"));
-		assert_eq!(Some(&50.13), t.get("seashells"));
-		assert_eq!(Some(&6.4), t.get("LK"));
+		t.delete("sea".as_bytes());
+		assert_eq!(None, t.get("sea".as_bytes()));
+		assert_eq!(None, t.get("seafood".as_bytes()));
+		assert_eq!(Some(&50.13), t.get("seashells".as_bytes()));
+		assert_eq!(Some(&6.4), t.get("LK".as_bytes()));
 
 		// delete leaf without parent
-		t.delete("seashells");
-		assert_eq!(None, t.get("seashell"));
-		assert_eq!(None, t.get("seashells"));
-		assert_eq!(Some(&6.4), t.get("LK"));
+		t.delete("seashells".as_bytes());
+		assert_eq!(None, t.get("seashell".as_bytes()));
+		assert_eq!(None, t.get("seashells".as_bytes()));
+		assert_eq!(Some(&6.4), t.get("LK".as_bytes()));
 	}
 
 	#[test]
@@ -301,43 +308,66 @@ mod tests {
 		];
 		let mut t = TrieST::<usize>::new();
 		for (i, s) in a.iter().enumerate() {
-			t.put(s, i);
+			t.put(s.as_bytes(), i);
 		}
 
-		let mut k = t.keys_with_prefix("").collect::<Vec<_>>();
+		let mut k = t
+			.keys_with_prefix("".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		let mut ac = a.clone();
 		ac.sort_unstable();
 		assert_eq!(ac, k);
 
-		let mut k = t.keys_with_prefix("a").collect::<Vec<_>>();
+		let mut k = t
+			.keys_with_prefix("a".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["are"], k);
 
-		let mut k = t.keys_with_prefix("s").collect::<Vec<_>>();
+		let mut k = t
+			.keys_with_prefix("s".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(
 			vec!["sea", "seashells", "she", "shells", "shore", "surely"],
 			k
 		);
 
-		let mut k = t.keys_with_prefix("sh").collect::<Vec<_>>();
+		let mut k = t
+			.keys_with_prefix("sh".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["she", "shells", "shore"], k);
 
-		let mut k = t.keys_with_prefix("she").collect::<Vec<_>>();
+		let mut k = t
+			.keys_with_prefix("she".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["she", "shells"], k);
 
-		let mut k = t.keys_with_prefix("shel").collect::<Vec<_>>();
+		let mut k = t
+			.keys_with_prefix("shel".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["shells"], k);
 
-		let mut k = t.keys_with_prefix("shells").collect::<Vec<_>>();
+		let mut k = t
+			.keys_with_prefix("shells".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["shells"], k);
 
-		let k = t.keys_with_prefix("shellsxxx").collect::<Vec<_>>();
+		let k = t
+			.keys_with_prefix("shellsxxx".as_bytes())
+			.collect::<Vec<_>>();
 		assert_eq!(0, k.len());
 	}
 
@@ -356,41 +386,65 @@ mod tests {
 		];
 		let mut t = TrieST::<usize>::new();
 		for (i, s) in a.iter().enumerate() {
-			t.put(s, i);
+			t.put(s.as_bytes(), i);
 		}
 
-		let k = t.keys_match_pattern("").collect::<Vec<_>>();
+		let k = t.keys_match_pattern("".as_bytes()).collect::<Vec<_>>();
 		assert_eq!(0, k.len());
 
-		let mut k = t.keys_match_pattern("a..").collect::<Vec<_>>();
+		let mut k = t
+			.keys_match_pattern("a..".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["are"], k);
 
-		let mut k = t.keys_match_pattern("a.e").collect::<Vec<_>>();
+		let mut k = t
+			.keys_match_pattern("a.e".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["are"], k);
 
-		let mut k = t.keys_match_pattern("ar.").collect::<Vec<_>>();
+		let mut k = t
+			.keys_match_pattern("ar.".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["are"], k);
 
-		let mut k = t.keys_match_pattern(".re").collect::<Vec<_>>();
+		let mut k = t
+			.keys_match_pattern(".re".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["are"], k);
 
-		let mut k = t.keys_match_pattern(".r.").collect::<Vec<_>>();
+		let mut k = t
+			.keys_match_pattern(".r.".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["are"], k);
 
-		let mut k = t.keys_match_pattern("..e").collect::<Vec<_>>();
+		let mut k = t
+			.keys_match_pattern("..e".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["are", "she", "the"], k);
 
-		let mut k = t.keys_match_pattern("......").collect::<Vec<_>>();
+		let mut k = t
+			.keys_match_pattern("......".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["shells", "surely"], k);
 
-		let mut k = t.keys_match_pattern("..rel.").collect::<Vec<_>>();
+		let mut k = t
+			.keys_match_pattern("..rel.".as_bytes())
+			.map(|k| String::from_utf8(k).unwrap())
+			.collect::<Vec<_>>();
 		k.sort_unstable();
 		assert_eq!(vec!["surely"], k);
 	}
@@ -410,20 +464,17 @@ mod tests {
 		];
 		let mut t = TrieST::<usize>::new();
 		for (i, s) in a.iter().enumerate() {
-			t.put(s, i);
+			t.put(s.as_bytes(), i);
 		}
 
-		assert_eq!(None, t.longest_key_of(""));
-		assert_eq!(None, t.longest_key_of("a"));
-		assert_eq!(Some(String::from("are")), t.longest_key_of("are"));
+		assert_eq!(None, t.longest_key_of("".as_bytes()));
+		assert_eq!(None, t.longest_key_of("a".as_bytes()));
+		assert_eq!(Some(3), t.longest_key_of("are".as_bytes()));
 
-		assert_eq!(None, t.longest_key_of("s"));
+		assert_eq!(None, t.longest_key_of("s".as_bytes()));
 
-		assert_eq!(Some(String::from("sea")), t.longest_key_of("sea"));
-		assert_eq!(Some(String::from("sea")), t.longest_key_of("seafood"));
-		assert_eq!(
-			Some(String::from("seashells")),
-			t.longest_key_of("seashellsabc")
-		);
+		assert_eq!(Some(3), t.longest_key_of("sea".as_bytes()));
+		assert_eq!(Some(3), t.longest_key_of("seafood".as_bytes()));
+		assert_eq!(Some(9), t.longest_key_of("seashellsabc".as_bytes()));
 	}
 }
