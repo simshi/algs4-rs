@@ -2,8 +2,8 @@ use super::bitio::*;
 use super::tst_u8::*;
 
 const R: usize = 256;
-const CODE_BITS: usize = 12;
-const MAX_CODES: usize = 1 << CODE_BITS;
+const SYMBOL_BITS: usize = 12;
+const MAX_SYMBOLS: usize = 1 << SYMBOL_BITS;
 
 pub fn compress(input: &[u8]) -> Vec<u8> {
 	let mut tst = new_symbol_tst();
@@ -14,9 +14,9 @@ pub fn compress(input: &[u8]) -> Vec<u8> {
 	while !p.is_empty() {
 		let n = tst.longest_key_of(p);
 		let symbol = tst.get(&p[..n]).unwrap();
-		io.write(*symbol, CODE_BITS);
+		io.write(*symbol, SYMBOL_BITS);
 
-		if n < p.len() && code < MAX_CODES {
+		if n < p.len() && code < MAX_SYMBOLS {
 			tst.put(&p[..n + 1], code);
 			code += 1;
 		}
@@ -29,11 +29,11 @@ pub fn decompress(input: &[u8]) -> Result<Vec<u8>, String> {
 	let mut st = (0..R).map(|i| vec![i as u8; 1]).collect::<Vec<_>>();
 
 	let mut input = MemBitIO::from_buffer(input);
-	let v = input.read(CODE_BITS).ok_or("invalid input")?;
+	let v = input.read(SYMBOL_BITS).ok_or("invalid input")?;
 	let mut last = vec![v as u8; 1];
 	let mut out = last.clone();
 
-	while let Some(symbol) = input.read(CODE_BITS) {
+	while let Some(symbol) = input.read(SYMBOL_BITS) {
 		let word = if let Some(word) = st.get(symbol) {
 			word.clone()
 		} else if symbol == st.len() {
@@ -45,7 +45,7 @@ pub fn decompress(input: &[u8]) -> Result<Vec<u8>, String> {
 		};
 		out.extend_from_slice(&word);
 
-		if st.len() < MAX_CODES {
+		if st.len() < MAX_SYMBOLS {
 			last.push(word[0]);
 			st.push(last);
 		}
