@@ -30,7 +30,7 @@ impl MemBitIO {
 
 	pub fn from_buffer(buf: &[u8]) -> Self {
 		Self {
-			buf: buf.iter().cloned().collect(),
+			buf: buf.to_vec(),
 			r: 0,
 			w: buf.len() * 8,
 		}

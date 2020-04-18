@@ -34,9 +34,14 @@ pub struct TrieST<T> {
 	root: NodePtr<T>,
 	n: usize,
 }
+impl<T> Default for TrieST<T> {
+	fn default() -> Self {
+		Self { root: None, n: 0 }
+	}
+}
 impl<T> TrieST<T> {
 	pub fn new() -> Self {
-		Self { root: None, n: 0 }
+		Default::default()
 	}
 	pub fn size(&self) -> usize {
 		self.n
@@ -62,7 +67,7 @@ impl<T> TrieST<T> {
 	pub fn keys_with_prefix(&self, prefix: &[u8]) -> impl Iterator<Item = Vec<u8>> {
 		let mut results = Vec::new();
 		let p = Self::_get_node(&self.root, prefix, 0);
-		let mut cv = prefix.iter().cloned().collect::<Vec<_>>();
+		let mut cv = prefix.to_vec();
 		Self::_collect(p, &mut cv, &mut results);
 
 		results.into_iter()
@@ -191,7 +196,7 @@ impl<T> TrieST<T> {
 			}
 
 			let c = pattern[d];
-			if c == '.' as u8 {
+			if c == b'.' {
 				for (i, p) in node.next.iter().enumerate() {
 					cv.push(i as u8);
 					Self::_collect_match_pattern(p, pattern, cv, results);

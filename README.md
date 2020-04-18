@@ -11,5 +11,5 @@
 ## Test && Benchmark
  - `cargo run --release --bin union_find < data/largeUF.txt`
  - `cargo run --release --bin symbol_graph data/routes.txt`
- - `Cargo test sorting::`
- - `Cargo +nightly bench`
+ - `cargo test sorting::`
+ - `cargo +nightly bench`

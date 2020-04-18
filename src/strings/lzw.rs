@@ -16,7 +16,7 @@ pub fn compress(input: &[u8]) -> Vec<u8> {
 		let symbol = tst.get(&p[..n]).unwrap();
 		io.write(*symbol, CODE_BITS);
 
-		if n + 1 <= p.len() && code < MAX_CODES {
+		if n < p.len() && code < MAX_CODES {
 			tst.put(&p[..n + 1], code);
 			code += 1;
 		}
@@ -29,11 +29,11 @@ pub fn decompress(input: &[u8]) -> Result<Vec<u8>, String> {
 	let mut st = (0..R).map(|i| vec![i as u8; 1]).collect::<Vec<_>>();
 
 	let mut input = MemBitIO::from_buffer(input);
-	let v = input.read(12).ok_or("invalid input")?;
+	let v = input.read(CODE_BITS).ok_or("invalid input")?;
 	let mut last = vec![v as u8; 1];
 	let mut out = last.clone();
 
-	while let Some(symbol) = input.read(12) {
+	while let Some(symbol) = input.read(CODE_BITS) {
 		let word = if let Some(word) = st.get(symbol) {
 			word.clone()
 		} else if symbol == st.len() {
@@ -130,6 +130,11 @@ mod tests {
 		let v: Vec<u8> = vec![0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
 		let r = compress(&v[..]);
 		assert_eq!(9, r.len());
+		assert_eq!(v, decompress(&r).ok().unwrap());
+
+		let v: Vec<u8> = vec![0; 512 * 1024];
+		let r = compress(&v[..]);
+		assert_eq!(1536, r.len()); // 0.29%
 		assert_eq!(v, decompress(&r).ok().unwrap());
 	}
 }

@@ -26,9 +26,14 @@ pub struct TST<T: Copy> {
 	root: NodePtr<T>,
 	n: usize,
 }
+impl<T: Copy> Default for TST<T> {
+	fn default() -> Self {
+		Self { root: None, n: 0 }
+	}
+}
 impl<T: Copy> TST<T> {
 	pub fn new() -> Self {
-		TST { root: None, n: 0 }
+		Default::default()
 	}
 	pub fn size(&self) -> usize {
 		self.n

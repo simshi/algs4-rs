@@ -25,9 +25,14 @@ pub struct TST<T: Copy> {
 	root: NodePtr<T>,
 	n: usize,
 }
+impl<T: Copy> Default for TST<T> {
+	fn default() -> Self {
+		Self { root: None, n: 0 }
+	}
+}
 impl<T: Copy> TST<T> {
 	pub fn new() -> Self {
-		Self { root: None, n: 0 }
+		Default::default()
 	}
 	pub fn size(&self) -> usize {
 		self.n
@@ -59,7 +64,7 @@ impl<T: Copy> TST<T> {
 	}
 
 	pub fn keys_with_prefix(&self, prefix: &[u8]) -> impl Iterator<Item = Vec<u8>> {
-		let mut cv = prefix.iter().cloned().collect::<Vec<_>>();
+		let mut cv = prefix.to_vec();
 		let mut results = Vec::new();
 
 		if prefix.is_empty() {

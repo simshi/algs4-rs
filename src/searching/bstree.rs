@@ -194,24 +194,24 @@ impl<K: Ord, V> BSTree<K, V> {
     }
     fn _delete(&mut self, list: List<K, V>, key: &K) -> List<K, V> {
         list.and_then(|mut b| {
-            if *key < b.key {
-                b.left = self._delete(b.left, key);
-            } else if *key > b.key {
-                b.right = self._delete(b.right, key);
-            } else {
-                if b.right.is_none() {
-                    return b.left;
-                }
-                if b.left.is_none() {
-                    return b.right;
-                }
+            match key.cmp(&b.key) {
+                Ordering::Less => b.left = self._delete(b.left, key),
+                Ordering::Greater => b.right = self._delete(b.right, key),
+                _ => {
+                    if b.right.is_none() {
+                        return b.left;
+                    }
+                    if b.left.is_none() {
+                        return b.right;
+                    }
 
-                // use min of right sub-tree as the new node
-                let t = b.left.take();
-                let (child, x) = self._pop_min(b.right.unwrap());
-                b = x.unwrap();
-                b.right = child;
-                b.left = t;
+                    // use min of right sub-tree as the new node
+                    let t = b.left.take();
+                    let (child, x) = self._pop_min(b.right.unwrap());
+                    b = x.unwrap();
+                    b.right = child;
+                    b.left = t;
+                }
             }
             b.size = 1 + self._len(&b.left) + self._len(&b.right);
             Some(b)

@@ -58,8 +58,8 @@ impl MSD {
 		}
 
 		// target index of each element
-		for i in lo..hi {
-			let idx = Self::str_char_at(a[i], d);
+		for (i, s) in a.iter().enumerate().take(hi).skip(lo) {
+			let idx = Self::str_char_at(s, d);
 			self.iv[i] = lo + self.count[idx - 1];
 			self.count[idx - 1] += 1;
 		}

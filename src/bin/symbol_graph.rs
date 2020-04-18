@@ -19,15 +19,15 @@ impl EdgeReader {
         }
     }
 }
-impl Iterator for EdgeReader{
+impl Iterator for EdgeReader {
     type Item = (String, String);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.stash.len() > 0 {
+        if !self.stash.is_empty() {
             return self.stash.pop();
         }
 
-        self.lines.next().map_or(None, |line| {
+        self.lines.next().and_then(|line| {
             line.ok().and_then(|line| {
                 let mut parts = line.split(&self.delimiter);
                 if let Some(v) = parts.next() {

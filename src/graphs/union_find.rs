@@ -1,3 +1,5 @@
+use std::cmp::Ordering::{Greater, Less};
+
 struct Node {
     parent: usize,
     rank: usize,
@@ -64,13 +66,13 @@ impl UnionFind {
             return;
         }
 
-        if self.ids[p_root].rank < self.ids[q_root].rank {
-            self.ids[p_root].parent = q_root;
-        } else if self.ids[p_root].rank > self.ids[q_root].rank {
-            self.ids[q_root].parent = p_root;
-        } else {
-            self.ids[p_root].parent = q_root;
-            self.ids[q_root].rank += 1;
+        match self.ids[p_root].rank.cmp(&self.ids[q_root].rank) {
+            Less => self.ids[p_root].parent = q_root,
+            Greater => self.ids[q_root].parent = p_root,
+            _ => {
+                self.ids[p_root].parent = q_root;
+                self.ids[q_root].rank += 1;
+            }
         }
         self.count -= 1;
     }
