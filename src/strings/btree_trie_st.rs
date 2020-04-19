@@ -87,7 +87,21 @@ impl<T> TrieST<T> {
 		results.into_iter()
 	}
 	pub fn longest_key_of(&self, prefix: &[u8]) -> Option<(usize, &T)> {
-		Self::_longest_key_of(&self.root, prefix, 0)
+		let mut max_length = 0;
+		let mut p = &self.root;
+		let mut vv = None;
+		for (d, b) in prefix.iter().enumerate() {
+			if let Some(node) = p.get(b) {
+				if node.val.is_some() {
+					max_length = d + 1;
+					vv = node.val.as_ref();
+				}
+				p = &node.children;
+			} else {
+				break;
+			}
+		}
+		vv.map(|v| (max_length, v))
 	}
 	// pub fn keys_match_pattern(&self, pattern: &[u8]) -> impl Iterator<Item = Vec<u8>> {
 	// 	let mut results = Vec::new();
@@ -141,16 +155,6 @@ impl<T> TrieST<T> {
 		}
 	}
 
-	fn _longest_key_of<'a>(c: &'a Children<T>, prefix: &[u8], d: usize) -> Option<(usize, &'a T)> {
-		if d == prefix.len() {
-			return None;
-		}
-		c.get(&prefix[d]).and_then(|node| {
-			let d = d + 1;
-			Self::_longest_key_of(&node.children, prefix, d)
-				.or_else(|| node.val.as_ref().map(|v| (d, v)))
-		})
-	}
 	// fn _collect_match_pattern(
 	// 	p: &NodePtr<T>,
 	// 	pattern: &[u8],
@@ -426,7 +430,7 @@ mod tests {
 	// }
 
 	#[test]
-	fn longest_key_of_query() {
+	fn longest_match_of_query() {
 		let a = vec![
 			"she",
 			"seashells",

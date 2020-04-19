@@ -72,14 +72,25 @@ impl<T> TrieST<T> {
 
 		results.into_iter()
 	}
-	pub fn longest_key_of(&self, prefix: &[u8]) -> Option<usize> {
+	pub fn longest_match(&self, prefix: &[u8]) -> Option<(usize, &T)> {
 		let mut max_length = 0;
-		Self::_longest_key(&self.root, prefix, 0, &mut max_length);
-		if max_length == 0 {
-			None
-		} else {
-			Some(max_length)
+		let mut vv = None;
+		if let Some(root) = &self.root {
+			let mut p = root;
+			for (d, b) in prefix.iter().enumerate() {
+				if let Some(node) = &p.next[*b as usize] {
+					if node.val.is_some() {
+						max_length = d + 1;
+						vv = node.val.as_ref();
+					}
+					p = node;
+				} else {
+					break;
+				}
+			}
 		}
+
+		vv.map(|v| (max_length, v))
 	}
 	pub fn keys_match_pattern(&self, pattern: &[u8]) -> impl Iterator<Item = Vec<u8>> {
 		let mut results = Vec::new();
@@ -163,20 +174,6 @@ impl<T> TrieST<T> {
 					cv.pop();
 				}
 			}
-		}
-	}
-
-	fn _longest_key(p: &NodePtr<T>, query: &[u8], d: usize, length: &mut usize) {
-		if let Some(node) = p {
-			if node.val.is_some() {
-				*length = d;
-			}
-			if d == query.len() {
-				return;
-			}
-
-			let c = query[d] as usize;
-			Self::_longest_key(&node.next[c], query, d + 1, length);
 		}
 	}
 
@@ -472,14 +469,14 @@ mod tests {
 			t.put(s.as_bytes(), i);
 		}
 
-		assert_eq!(None, t.longest_key_of("".as_bytes()));
-		assert_eq!(None, t.longest_key_of("a".as_bytes()));
-		assert_eq!(Some(3), t.longest_key_of("are".as_bytes()));
+		assert_eq!(None, t.longest_match("".as_bytes()));
+		assert_eq!(None, t.longest_match("a".as_bytes()));
+		assert_eq!(Some((3, &7)), t.longest_match("are".as_bytes()));
 
-		assert_eq!(None, t.longest_key_of("s".as_bytes()));
+		assert_eq!(None, t.longest_match("s".as_bytes()));
 
-		assert_eq!(Some(3), t.longest_key_of("sea".as_bytes()));
-		assert_eq!(Some(3), t.longest_key_of("seafood".as_bytes()));
-		assert_eq!(Some(9), t.longest_key_of("seashellsabc".as_bytes()));
+		assert_eq!(Some((3, &3)), t.longest_match("sea".as_bytes()));
+		assert_eq!(Some((3, &3)), t.longest_match("seafood".as_bytes()));
+		assert_eq!(Some((9, &1)), t.longest_match("seashellsabc".as_bytes()));
 	}
 }

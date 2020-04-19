@@ -83,12 +83,13 @@ impl<T: Copy> TST<T> {
 
 		results.into_iter()
 	}
-	pub fn longest_key_of(&self, prefix: &[u8]) -> usize {
+	pub fn longest_match(&self, prefix: &[u8]) -> Option<(usize, &T)> {
 		if prefix.is_empty() {
-			return 0;
+			return None;
 		}
 
 		let mut max_length = 0;
+		let mut vv = None;
 		let mut d = 0;
 		let mut p = &self.root;
 		while let Some(node) = p {
@@ -99,6 +100,7 @@ impl<T: Copy> TST<T> {
 					d += 1;
 					if node.val.is_some() {
 						max_length = d;
+						vv = node.val.as_ref();
 					}
 					if d == prefix.len() {
 						break;
@@ -108,7 +110,7 @@ impl<T: Copy> TST<T> {
 			}
 		}
 
-		max_length
+		vv.map(|v| (max_length, v))
 	}
 
 	pub fn iter(&self) -> Iter<'_, T> {
@@ -423,15 +425,15 @@ mod tests {
 			t.put(s.as_bytes(), i);
 		}
 
-		assert_eq!(0, t.longest_key_of("".as_bytes()));
-		assert_eq!(0, t.longest_key_of("a".as_bytes()));
-		assert_eq!(3, t.longest_key_of("are".as_bytes()));
+		assert_eq!(None, t.longest_match("".as_bytes()));
+		assert_eq!(None, t.longest_match("a".as_bytes()));
+		assert_eq!(Some((3, &7)), t.longest_match("are".as_bytes()));
 
-		assert_eq!(0, t.longest_key_of("s".as_bytes()));
+		assert_eq!(None, t.longest_match("s".as_bytes()));
 
-		assert_eq!(3, t.longest_key_of("sea".as_bytes()));
-		assert_eq!(3, t.longest_key_of("seafood".as_bytes()));
-		assert_eq!(9, t.longest_key_of("seashellsabc".as_bytes()));
+		assert_eq!(Some((3, &3)), t.longest_match("sea".as_bytes()));
+		assert_eq!(Some((3, &3)), t.longest_match("seafood".as_bytes()));
+		assert_eq!(Some((9, &1)), t.longest_match("seashellsabc".as_bytes()));
 	}
 
 	#[test]

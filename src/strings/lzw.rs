@@ -12,8 +12,7 @@ pub fn compress(input: &[u8]) -> Vec<u8> {
 
 	let mut p = input;
 	while !p.is_empty() {
-		let n = tst.longest_key_of(p);
-		let symbol = tst.get(&p[..n]).unwrap();
+		let (n, symbol) = tst.longest_match(p).unwrap();
 		io.write(*symbol, SYMBOL_BITS);
 
 		if n < p.len() && code < MAX_SYMBOLS {
