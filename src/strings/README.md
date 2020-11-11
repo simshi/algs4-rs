@@ -203,8 +203,8 @@
   - coding: (TODO) can support non-ASCII by replacing `char` with `u8`
 
 ## LZW
-  - `char` is 32-bit wide, so we must use `u8` instead to compress and decompress.
-  - `TST::longest_key_of` makes code simple, comparing with extending the key one byte by one byte and then search in a dictionary.
+  - `char` is 32-bit unicode, so we must use `u8` instead to handle all kinds of binary data.
+  - `TST::longest_match` makes code simple, comparing with extending the key one byte by one byte and then search in a dictionary.
   - specical case `symbol == st.len()` in decompression, consider a pattern `x.*x.*x` (two `.*` substrings are same), after compress `x.*`, `x.*x` would be added to the dictionary, then the following `x.*x` would use this symbol immediately. But while decompressing met the symbol, `x.*x` is not in the dictionary yet, that's where the special case comes from, or in short, decompressing is one step slower than compressing.
   - Optimization: init TST has height 256 if inserted (0..255) by order, it's because TST has no auto-balance. As a workaround insert them recursively in the order "middle one, left partition, right partition", results in a height 9 (2^8=256).
   - If input is a read stream (processing input iteratively):
@@ -216,9 +216,9 @@
     if word.len() < buf_len {
       continue;
     }
-
     // now word contains a word longer than any key in tst
-    let n = tst.longest_key_of(&word[..]);
+
+    let n = tst.longest_match(&word[..]);
     if buf_len < n + 1 {
       buf_len = n + 1;
     }

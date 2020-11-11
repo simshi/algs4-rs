@@ -83,8 +83,8 @@ impl<T: Copy> TST<T> {
 
 		results.into_iter()
 	}
-	pub fn longest_match(&self, prefix: &[u8]) -> Option<(usize, &T)> {
-		if prefix.is_empty() {
+	pub fn longest_match(&self, query: &[u8]) -> Option<(usize, &T)> {
+		if query.is_empty() {
 			return None;
 		}
 
@@ -93,7 +93,7 @@ impl<T: Copy> TST<T> {
 		let mut d = 0;
 		let mut p = &self.root;
 		while let Some(node) = p {
-			match prefix[d].cmp(&node.b) {
+			match query[d].cmp(&node.b) {
 				Less => p = &node.left,
 				Greater => p = &node.right,
 				Equal => {
@@ -102,7 +102,7 @@ impl<T: Copy> TST<T> {
 						max_length = d;
 						vv = node.val.as_ref();
 					}
-					if d == prefix.len() {
+					if d == query.len() {
 						break;
 					}
 					p = &node.middle;

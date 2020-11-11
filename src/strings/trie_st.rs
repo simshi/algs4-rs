@@ -72,12 +72,12 @@ impl<T> TrieST<T> {
 
 		results.into_iter()
 	}
-	pub fn longest_match(&self, prefix: &[u8]) -> Option<(usize, &T)> {
+	pub fn longest_match(&self, query: &[u8]) -> Option<(usize, &T)> {
 		let mut max_length = 0;
 		let mut vv = None;
 		if let Some(root) = &self.root {
 			let mut p = root;
-			for (d, b) in prefix.iter().enumerate() {
+			for (d, b) in query.iter().enumerate() {
 				if let Some(node) = &p.next[*b as usize] {
 					if node.val.is_some() {
 						max_length = d + 1;
