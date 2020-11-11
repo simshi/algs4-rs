@@ -28,11 +28,11 @@ fn partition<T: PartialOrd>(arr: &mut [T], lo: usize, hi: usize) -> usize {
     loop {
         // do-while
         i += 1;
-        while { i < hi && arr[i] < arr[lo] } {
+        while i < hi && arr[i] < arr[lo] {
             i += 1;
         }
         j -= 1;
-        while { arr[j] > arr[lo] } {
+        while arr[j] > arr[lo] {
             j -= 1;
         }
 

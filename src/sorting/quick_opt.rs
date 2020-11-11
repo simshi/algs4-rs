@@ -46,12 +46,12 @@ fn partition<T: Ord + Clone>(arr: &mut [T], lo: usize, hi: usize) -> usize {
     loop {
         // do-while
         i += 1;
-        while { arr[i] < pivot } {
+        while arr[i] < pivot {
             i += 1;
         }
         // do-while
         j -= 1;
-        while { arr[j] > pivot } {
+        while arr[j] > pivot {
             j -= 1;
         }
 
