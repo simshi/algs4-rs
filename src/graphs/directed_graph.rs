@@ -35,7 +35,7 @@ impl MutableGraph for DirectedGraph {
 
 	fn add_edge(&mut self, edge: &Self::Edge) {
 		let v = edge.from();
-		self.adj[v].push(edge.clone());
+		self.adj[v].push(*edge);
 		self.e += 1;
 	}
 }

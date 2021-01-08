@@ -108,7 +108,7 @@ mod tests {
 
 		assert_eq!(0, sp.dist_to(0).round() as usize);
 		assert_eq!(1, sp.dist_to(1).round() as usize);
-		assert_eq!(f64::INFINITY, sp.dist_to(2).round());
+		assert_eq!(f64::INFINITY, sp.dist_to(2));
 
 		let lp = ag.acyclic_lp(0);
 		let a = lp.path_to(1).map(|e| e.to()).collect::<Vec<_>>();

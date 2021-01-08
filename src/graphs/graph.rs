@@ -15,8 +15,8 @@ impl EdgeWeightedUndirectedGraph {
 
     pub fn add_edge(&mut self, edge: &WeightedUndirectedEdge) {
         let (v, w) = edge.vertices();
-        self.adj[v].push(edge.clone());
-        self.adj[w].push(edge.clone());
+        self.adj[v].push(*edge);
+        self.adj[w].push(*edge);
         self.e += 1;
     }
 }
@@ -63,7 +63,7 @@ impl MutableGraph for EdgeWeightedDirectedGraph {
     }
 
     fn add_edge(&mut self, edge: &Self::Edge) {
-        self.adj[edge.from()].push(edge.clone());
+        self.adj[edge.from()].push(*edge);
         self.e += 1;
     }
 }
@@ -95,7 +95,7 @@ impl MutableGraph for EdgeNonNegativeWeightedDirectedGraph {
     }
 
     fn add_edge(&mut self, edge: &Self::Edge) {
-        self.adj[edge.from()].push(edge.clone());
+        self.adj[edge.from()].push(*edge);
         self.e += 1;
     }
 }

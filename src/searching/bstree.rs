@@ -90,7 +90,7 @@ impl<K: Ord, V> BSTree<K, V> {
     pub fn iter(&self) -> Iter<'_, K, V> {
         Iter {
             stack: Vec::new(),
-            current: self.root.as_ref().map(|r| &**r),
+            current: self.root.as_deref(),
         }
     }
 
@@ -283,7 +283,7 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
         // push left childen for visiting (travel to the min)
         while let Some(ref l) = self.current {
             self.stack.push(l);
-            self.current = l.left.as_ref().map(|x| &**x);
+            self.current = l.left.as_deref();
         }
 
         // process the top in stack and point current to the right child
