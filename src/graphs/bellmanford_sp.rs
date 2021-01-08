@@ -135,7 +135,7 @@ mod tests {
 
 		assert_eq!(0, sp.dist_to(0).round() as usize);
 		assert_eq!(1, sp.dist_to(1).round() as usize);
-		assert_eq!(0, sp.dist_to(2).round() as usize);
+		assert_eq!(f64::INFINITY, sp.dist_to(2));
 	}
 
 	#[test]

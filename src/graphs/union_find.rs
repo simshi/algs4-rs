@@ -22,7 +22,7 @@ impl UnionFind {
     }
 
     pub fn find(&self, i: usize) -> Option<usize> {
-        if i >= self.ids.capacity() {
+        if i >= self.ids.len() {
             None
         } else {
             Some(self._find(i))
