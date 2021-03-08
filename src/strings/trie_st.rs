@@ -6,26 +6,14 @@ struct Node<T> {
 }
 type NodePtr<T> = Option<Box<Node<T>>>;
 
-// TODO: find a better way to init `next` array
-macro_rules! make_array {
-	($n:expr, $constructor:expr, $ty:ty) => {{
-		let mut items: [std::mem::MaybeUninit<$ty>; $n] =
-			unsafe { std::mem::MaybeUninit::uninit().assume_init() };
-		for (i, elem) in items[..].iter_mut().enumerate() {
-			unsafe {
-				std::ptr::write(elem.as_mut_ptr(), $constructor(i));
-				}
-			}
-
-		unsafe { std::mem::transmute::<_, [$ty; $n]>(items) }
-		}};
-}
-
 impl<T> Node<T> {
+	// 'const value repetition for arrays' since 1.50
+	const NODE_PTR_NONE: NodePtr<T> = None;
+
 	fn new(val: Option<T>) -> Self {
 		Self {
 			val,
-			next: make_array!(R, |_| None, NodePtr<T>),
+			next: [Self::NODE_PTR_NONE; R],
 		}
 	}
 }
