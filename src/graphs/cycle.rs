@@ -1,6 +1,6 @@
 use super::base::*;
 
-#[derive(Default, PartialEq, Debug)]
+#[derive(Default, PartialEq, Eq, Debug)]
 pub struct Cycle {
     path: Vec<usize>,
 }

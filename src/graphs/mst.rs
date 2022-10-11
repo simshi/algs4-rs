@@ -113,7 +113,7 @@ where
         self.edge_to.iter().filter_map(|e| *e)
     }
 
-    fn prim<G>(&mut self, v: usize, g: &G, pq: &mut IndexMinPQ<f64>, marked: &mut Vec<bool>)
+    fn prim<G>(&mut self, v: usize, g: &G, pq: &mut IndexMinPQ<f64>, marked: &mut [bool])
     where
         G: Graph<Edge = E>,
     {
@@ -126,7 +126,7 @@ where
         }
     }
 
-    fn scan<G>(&mut self, v: usize, g: &G, pq: &mut IndexMinPQ<f64>, marked: &mut Vec<bool>)
+    fn scan<G>(&mut self, v: usize, g: &G, pq: &mut IndexMinPQ<f64>, marked: &mut [bool])
     where
         G: Graph<Edge = E>,
     {
