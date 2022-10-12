@@ -22,17 +22,22 @@
       }
       ```
   - bounds composition table, customer graph/edge types automatically implemented those algorithms:
-      |*Algorithm/Bounds*| **Graph Type** | **Edge Type**|
-      | --- | --- | --- |
-      | Reversed | Mutable | Directed |
-      | DFS Order | - | Directed |
-      | Minimum Spanning Tree | - | Undirected |
-      | Connected Components | - | Undirected |
-      | Strongly Connected Components | - | Directed |
-      | Cycle | - | - |
-      | Dijkstra Shortest Path | - | Directed+NonNegative |
-      | Acyclic Shortest/Longest Path | Acyclic | Directed+Weighted |
-      | Bellman Ford Shortest Path | - | Directed+Weighted |
+      | *Algorithm/Bounds*            | **Graph Type** | **Edge Type**        |
+      | ----------------------------- | -------------- | -------------------- |
+      | Reversed                      | Mutable        | Directed             |
+      | DFS Order                     | -              | Directed             |
+      | Minimum Spanning Tree         | -              | Undirected           |
+      | Connected Components          | -              | Undirected           |
+      | Strongly Connected Components | -              | Directed             |
+      | Cycle                         | -              | -                    |
+      | Dijkstra Shortest Path        | -              | Directed+NonNegative |
+      | Acyclic Shortest/Longest Path | Acyclic        | Directed+Weighted    |
+      | Bellman Ford Shortest Path    | -              | Directed+Weighted    |
+
+### Description
+  - Reversed (not `fn reverse(&mut self)`)
+
+    Reversing a directed graph by making a new graph with all `edge.reversed()`
 
   - Minimum Spanning Tree
     - `IndexMinPQ::upsert` make code clear

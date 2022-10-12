@@ -295,7 +295,7 @@ mod tests {
         for e in ewdag {
             g.add_edge(&WeightedDirectedEdge::new(e.0, e.1, e.2));
         }
-        let ag = EdgeWeightedDAG::new(g).unwrap();
+        let ag = EdgeWeightedDAG::try_from(g).unwrap();
 
         let r = ag.bellmanford_sp(5);
         assert!(r.is_ok());

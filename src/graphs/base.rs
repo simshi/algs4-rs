@@ -38,6 +38,7 @@ pub trait NonNegative: Weighted {}
 pub trait Graph {
     type Edge: Edge;
 
+    // fn new(v: usize) -> Self;
     fn v_size(&self) -> usize;
     fn e_size(&self) -> usize;
     // fn adj(&self, v: usize) -> impl Iterator<Item = Self::Edge> + '_;
@@ -55,6 +56,6 @@ pub trait MutableGraph: Graph {
 pub trait Acyclic: Graph + Sized {
     type Graph: Graph;
 
-    fn new(g: Self::Graph) -> Option<Self>;
+    fn try_from(g: Self::Graph) -> Option<Self>;
     fn topo_order(&self) -> std::vec::IntoIter<Vertex>;
 }

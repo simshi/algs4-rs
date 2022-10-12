@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn empty_sp() {
         let g = EWDG::new(1);
-        let ag = EdgeWeightedDAG::new(g).unwrap();
+        let ag = EdgeWeightedDAG::try_from(g).unwrap();
 
         let sp = ag.acyclic_sp(0);
         assert_eq!(0, sp.dist_to(0).round() as usize);
@@ -98,7 +98,7 @@ mod tests {
         let mut g = EWDG::new(3);
         g.add_edge(&WeightedDirectedEdge::new(0, 1, 1.0));
 
-        let ag = EdgeWeightedDAG::new(g).unwrap();
+        let ag = EdgeWeightedDAG::try_from(g).unwrap();
         let sp = ag.acyclic_sp(0);
 
         assert_eq!(None, sp.path_to(0).next());
@@ -142,7 +142,7 @@ mod tests {
             g.add_edge(&WeightedDirectedEdge::new(e.0, e.1, e.2));
         }
 
-        let ag = EdgeWeightedDAG::new(g);
+        let ag = EdgeWeightedDAG::try_from(g);
 
         let sp = ag.unwrap().acyclic_sp(5);
         assert_eq!(
@@ -204,7 +204,7 @@ mod tests {
             g.add_edge(&WeightedDirectedEdge::new(e.0, e.1, e.2));
         }
 
-        let ag = EdgeWeightedDAG::new(g);
+        let ag = EdgeWeightedDAG::try_from(g);
 
         let lp = ag.unwrap().acyclic_lp(5);
         assert_eq!(
