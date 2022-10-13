@@ -1,7 +1,13 @@
+use std::convert::TryFrom;
+
+/// Vertex
+///
+/// A basic concept of graph defined as an id.
 pub type Vertex = usize;
 
-// Edges
-// should work like values (Copy)
+/// Edge
+///
+/// A basic concept of graph, works like values (Copy)
 pub trait Edge: Copy {
     fn vertices(&self) -> (Vertex, Vertex);
     fn other(&self, v: Vertex) -> Vertex {
@@ -14,8 +20,14 @@ pub trait Edge: Copy {
     }
 }
 
+/// Undirected
+///
+/// Concept undirected edge
 pub trait Undirected: Edge {}
 
+/// Directed
+///
+/// Concept directed edge has `from` and `to`, so can be `reversed`
 pub trait Directed: Edge {
     fn from(&self) -> Vertex {
         self.vertices().0
@@ -28,13 +40,21 @@ pub trait Directed: Edge {
 // impl<E: Directed> !Undirected for E {}
 // impl<E: Undirected> !Directed for E {}
 
+/// Weighted
+///
+/// Concept weighted has weight on edge
 pub trait Weighted: Edge + PartialOrd {
     fn weight(&self) -> f64;
 }
 
+/// NonNegative
+///
+/// Concept non-negative has zero or possitive weight value on edge
 pub trait NonNegative: Weighted {}
 
-// Graphs
+/// Graph
+///
+/// A graph consists of vertices and edges.
 pub trait Graph {
     type Edge: Edge;
 
@@ -49,13 +69,21 @@ pub trait Graph {
         Box::new((0..self.v_size()).flat_map(move |v| self.adj(v)))
     }
 }
+
+/// Mutable Graph
+///
+/// A mutuable graph can add edges to it.
 pub trait MutableGraph: Graph {
     fn new(v: usize) -> Self;
     fn add_edge(&mut self, edge: &Self::Edge);
 }
-pub trait Acyclic: Graph + Sized {
+
+/// Directed acyclic graph
+///
+/// a DAG can be sorted by topological order, and it's converted from other
+/// graphs which passed the cyclic detection.
+pub trait Acyclic: Graph + TryFrom<Self::Graph> + Sized {
     type Graph: Graph;
 
-    fn try_from(g: Self::Graph) -> Option<Self>;
     fn topo_order(&self) -> std::vec::IntoIter<Vertex>;
 }

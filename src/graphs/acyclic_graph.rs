@@ -33,13 +33,6 @@ where
 impl Acyclic for EdgeWeightedDAG<EdgeWeightedDirectedGraph> {
     type Graph = EdgeWeightedDirectedGraph;
 
-    fn try_from(g: Self::Graph) -> Option<Self> {
-        if CycleDetection::detect_directed(&g).is_some() {
-            return None;
-        }
-
-        Some(Self { g })
-    }
     fn topo_order(&self) -> std::vec::IntoIter<Vertex> {
         self.g.reversed_post_order()
     }

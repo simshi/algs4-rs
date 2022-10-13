@@ -76,6 +76,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::convert::TryFrom;
+
     use super::super::EdgeWeightedDAG;
     use super::super::EdgeWeightedDirectedGraph as EWDG;
     use super::super::WeightedDirectedEdge;

@@ -100,6 +100,8 @@ impl BellmanfordSP {
 
 #[cfg(test)]
 mod tests {
+    use std::convert::TryFrom;
+
     use super::super::EdgeNonNegativeWeightedDirectedGraph as ENNWDG;
     use super::super::EdgeWeightedDAG;
     use super::super::EdgeWeightedDirectedGraph as EWDG;
