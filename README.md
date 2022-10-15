@@ -12,4 +12,4 @@
  - `cargo run --release --bin union_find < data/largeUF.txt`
  - `cargo run --release --bin symbol_graph data/routes.txt`
  - `cargo test sorting::`
- - `cargo +nightly bench`
+ - `cargo bench`

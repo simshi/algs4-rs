@@ -45,7 +45,7 @@
     - implement Prim MST in eager approach, at most V-1 elements in IndexMinPQ, so E*LogV
     - `Iterator::sum` and `Iterator::filter_map` is useful
     - Kruskal MST is easier
-  - DFS Order: implemented as `Iterator`
+  - DFS Order: implemented as `Iterator` by a stack
   - (Strongly) connected components
     - an imporovement: elimated `count` for component's id, calculated by the length of `sizes:Vec<usize>`
   - Acyclic shortest path
@@ -75,4 +75,4 @@
 
 ## Some Thoughts On Design
   - comparing to OOP (e.g. Java) design, `trait` provides more flexiblities, can do more compositions;
-  - for me, by `trait` seems we can achieve a perfect **Mixin** mechanism without messing up with inheritance, mixin is a poison in OOP but feels very nature implemented with `trait`
+  - by `trait` seems we can achieve a perfect **Mixin** mechanism without messing up with inheritance, mixin is a poison in OOP but feels very nature implemented with `trait`

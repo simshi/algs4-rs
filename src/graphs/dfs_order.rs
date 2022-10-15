@@ -1,5 +1,8 @@
 use super::base::*;
 
+/// DFS order traversal
+///
+/// DFS traversal can be in pre-order or (reversed) post-order.
 pub trait DFSOrder<G, E: Directed>
 where
     G: Graph<Edge = E>,
@@ -8,7 +11,8 @@ where
     fn post_order(&self) -> PostOrderIter<'_, G, E>;
     fn reversed_post_order(&self) -> std::vec::IntoIter<Vertex>;
 }
-// dfs order applied only to directed graphs
+
+// DFS order applied only to all directed graphs, i.e. graphs with `Edge: Directed`
 impl<G, E: Directed> DFSOrder<G, E> for G
 where
     G: Graph<Edge = E>,
@@ -36,6 +40,10 @@ where
     }
 }
 
+/// Pre-order iterator for visiting vertices in pre-order
+///
+/// Hold a reference to G, implement by a marked vector and a stack for
+/// a recursive process.
 pub struct PreOrderIter<'a, G> {
     g: &'a G,
     v: usize,
@@ -50,6 +58,7 @@ where
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // handle forest
         if self.stack.is_empty() {
             while self.v < self.g.v_size() {
                 if !self.marked[self.v] {
@@ -60,7 +69,9 @@ where
             }
         }
 
+        // visit the top one, if none, end due to all vertices were visited
         self.stack.pop().map(|v| {
+            // visit the v first as `pre` order
             self.marked[v] = true;
             for e in self.g.adj(v) {
                 if !self.marked[e.to()] {
@@ -73,6 +84,10 @@ where
     }
 }
 
+/// Post-order iterator for visiting vertices in post-order
+///
+/// Hold a reference to G, implement by a marked vector and a stack for
+/// a recursive process.
 pub struct PostOrderIter<'a, G, E>
 where
     E: Directed,
@@ -105,18 +120,23 @@ where
 
         // traversal trees
         while let Some((v, mut iter)) = self.stack.pop() {
-            let mut ww: Option<Vertex> = None;
+            // find the first un-visited adjacent
+            let mut adj: Option<Vertex> = None;
             for e in iter.by_ref() {
                 let w = e.to();
                 if !self.marked[w] {
                     self.marked[w] = true;
-                    ww = Some(w);
+                    adj = Some(w);
                     break;
                 }
             }
+            // push back current vertex
             self.stack.push((v, iter));
 
-            if let Some(w) = ww {
+            // if there is un-visited adjacent, recursively visits it first,
+            // otherwise all adjacent vertices were visited, break and pop the
+            // vertex on stack top for visiting.
+            if let Some(w) = adj {
                 self.stack.push((w, self.g.adj(w)));
             } else {
                 break;
