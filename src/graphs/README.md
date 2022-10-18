@@ -39,12 +39,16 @@
 
     Reversing a directed graph by making a new graph with all `edge.reversed()`
 
-  - Minimum Spanning Tree
+  - **Union Find**
+    - to solve dynamic connectivity
+    - connect small tree to larger tree to get lower level tree
+    - do path compression in `union`
+  - **Minimum Spanning Tree**
+    - a spanning tree with minimum sum(weight of edges), in a weighted undirected graph
+    - implemented for all undirected weighted graphs
+    - Prim MST in eager approach(`E+VlogV`): for each v added into the growing tree; for e in v.adj(); upsert e; done; done; max V-1 in IndexMinPQ, so `V*LogV`; and each edge is visited to check `marked[w]`, so `E+VlogV`.
+    - Kruskal(`ElogE`): for edge in MinPQ(edges).pop(); if u,v not connected add to tree, if tree.edges.len()==V-1 break; done.
     - `IndexMinPQ::upsert` make code clear
-    - `Iterator::flatten` in `Graph`
-    - implement Prim MST in eager approach, at most V-1 elements in IndexMinPQ, so E*LogV
-    - `Iterator::sum` and `Iterator::filter_map` is useful
-    - Kruskal MST is easier
   - DFS Order: implemented as `Iterator` by a stack
   - (Strongly) connected components
     - an imporovement: elimated `count` for component's id, calculated by the length of `sizes:Vec<usize>`
@@ -52,6 +56,7 @@
     - `Acyclic` graph has `fn topo_order()` which clearly expressed the algorithm's requirement
   - Bellman Ford
     - `Result<WeightedPath<E>, Cycle>` express the result of the algorithm, either a shortest path found, or an cycle detected
+    - `Iterator::flatten` in `Graph`
 
 ## Known Issues
   - impl can't disjoint based on associated type, e.g.

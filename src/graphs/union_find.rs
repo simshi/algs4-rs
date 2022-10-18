@@ -4,6 +4,9 @@ struct Node {
     parent: usize,
     rank: usize,
 }
+/// Union Find
+///
+/// ids[]: pointers to parent node id, so we can track recursively until root
 pub struct UnionFind {
     ids: Vec<Node>,
     count: usize,

@@ -2,12 +2,17 @@ use super::super::sorting::{IndexMinPQ, MinPQ};
 use super::base::*;
 use super::union_find::UnionFind;
 
+/// Minimum spanning tree
+///
+/// A spanning tree connected all vertices in a weighted undirected graph with
+/// minimum edges.map(_.weight()).sum(), it must has V-1 edges
 pub trait MST {
     type Edge: Undirected + Weighted;
 
     fn kruskal_mst(&self) -> KruskalMST<Self::Edge>;
     fn prim_mst(&self) -> PrimMST<Self::Edge>;
 }
+// MST implementation for all undirect weighted graphs
 impl<G, E> MST for G
 where
     E: Undirected + Weighted,
@@ -23,6 +28,12 @@ where
     }
 }
 
+/// Kruskal algorithm for MST
+///
+/// An edge-based algorithm:
+/// build a IndexMinPQ of all edges, for each poped edge, check whether (v,w)
+/// was alread connected in mst by `Union Find`, if not, add it into mst, break
+/// if V-1 edge is in mst
 pub struct KruskalMST<E: Undirected + Weighted> {
     edges_: Vec<E>,
     weight: f64,
@@ -76,7 +87,11 @@ where
     }
 }
 
-// minimum spanning tree by Eager Prim algorithm
+/// Eager Prim algorithm for MST
+///
+/// A vertex-based algorithm:
+/// for each edge connected to current mst, inspect the minimum edge by MinPQ,
+/// upsert w with minimum weighted edge into mst.
 pub struct PrimMST<E: Undirected + Weighted> {
     edge_to: Vec<Option<E>>,
     weight_: f64,
