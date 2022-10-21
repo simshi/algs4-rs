@@ -1,5 +1,12 @@
+//! Connected Components
+//!
+//! Provides an abstraction of connected components of a graph, and implement
+//! CC for all undirected graphs generically.
 use super::base::*;
 
+/// HasCC
+///
+/// Undirected graph can have connected components.
 pub trait HasCC {
     fn cc(&self) -> CC;
 }
@@ -13,7 +20,10 @@ where
         CC::new(self)
     }
 }
-// connected component
+/// Connected Component
+///
+/// `ids[]` contains subgraph id of each vertex.
+/// `sizes[]` contains size of each subgraph.
 pub struct CC {
     ids: Vec<usize>,
     sizes: Vec<usize>,
@@ -52,9 +62,10 @@ impl CC {
         G: Graph,
     {
         let mut marked = vec![false; g.v_size()];
+        // handle forest of multiple subgraphs
         for v in 0..g.v_size() {
             if !marked[v] {
-                self.sizes.push(0);
+                self.sizes.push(0); // found a new subgraph
                 self.dfs(g, v, &mut marked);
             }
         }

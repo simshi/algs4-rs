@@ -1,7 +1,16 @@
+//! Strongly Connected Components
+//!
+//! A graph is said to be strongly connected if every vertex is reachable from
+//! every other vertex. The strongly connected components of an arbitrary
+//! directed graph form a partition into subgraphs that are themselves strongly
+//! connected.
 use super::base::*;
 use super::dfs_order::*;
 use super::DirectedGraph;
 
+/// HasSCC
+///
+/// Directed graphs can have strongly connected components.
 pub trait HasSCC {
     fn scc(&self) -> SCC;
 }
@@ -16,7 +25,11 @@ where
     }
 }
 
-// KosarajuShrir strongly-connected components
+/// Strongly connected components result
+///
+/// Implemented in Kosaraju-Shrir's algorithm.
+/// `ids[]` contains subgraph id of each vertex.
+/// `sizes[]` contains size of each subgraph.
 pub struct SCC {
     ids: Vec<usize>,
     sizes: Vec<usize>,
