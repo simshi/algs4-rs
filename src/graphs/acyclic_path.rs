@@ -1,6 +1,10 @@
 use super::base::*;
 use super::weighted_path::*;
 
+/// HasAcyclicPath
+///
+/// Acyclic shortest/longest path algorithm can be applied to directed
+/// negative/non-negative graphs.
 pub trait HasAcyclicPath<E>
 where
     E: Directed + Weighted,

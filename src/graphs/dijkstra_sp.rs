@@ -2,13 +2,16 @@ use super::super::sorting::IndexMinPQ;
 use super::base::*;
 use super::weighted_path::*;
 
+/// HasDijkstraSP
+///
+/// Directed non-negative graph can calculate shortest path by Dijkstra algorithm
 pub trait HasDijkstraSP<E>
 where
     E: Directed + NonNegative,
 {
     fn dijkstra_sp(&self, s: usize) -> WeightedPath<E>;
 }
-// Dijkstra algorithm applied to non-nagative DAG
+// Dijkstra algorithm can be applied to all non-nagative DAG
 impl<G, E> HasDijkstraSP<E> for G
 where
     E: Directed + NonNegative,
@@ -40,8 +43,7 @@ fn relax<E>(p: &mut WeightedPath<E>, e: E, pq: &mut IndexMinPQ<f64>)
 where
     E: Directed + NonNegative,
 {
-    let v = e.from();
-    let w = e.to();
+    let (v, w) = (e.from(), e.to());
     if p.dist_to[v] + e.weight() < p.dist_to[w] {
         p.dist_to[w] = p.dist_to[v] + e.weight();
         p.edge_to[w] = Some(e);

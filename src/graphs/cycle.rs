@@ -1,3 +1,6 @@
+//! Cycle Detection
+//!
+//! Detects cycles' existence of a graph, a `Cycle` is represented as a path.
 use super::base::*;
 
 #[derive(Default, PartialEq, Eq, Debug)]

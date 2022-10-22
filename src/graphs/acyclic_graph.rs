@@ -34,6 +34,7 @@ where
 impl Acyclic for EdgeWeightedDAG<EdgeWeightedDirectedGraph> {
     type Graph = EdgeWeightedDirectedGraph;
 
+    // reversed_post_order is topological order if and only if the graph is acyclic
     fn topo_order(&self) -> std::vec::IntoIter<Vertex> {
         self.g.reversed_post_order()
     }

@@ -37,7 +37,6 @@
 
 ### Reversed (not `fn reverse(&mut self)`)
   - Reversing a directed graph by making a new graph with all `edge.reversed()`
-  - TODO: impl<G, MG> From<G> for MG or impl<G> Reversed<G> for DirectedGraph?
 
 ### DFS Order
   - implemented as `Iterator` by a stack
@@ -72,12 +71,20 @@
     > 4. 最后得到A，求解完成.
   - an imporovement: elimated `count` for component's id, calculated by the length of `sizes:Vec<usize>`
 
-### Acyclic shortest path
-    - `Acyclic` graph has `fn topo_order()` which clearly expressed the algorithm's requirement
+### Dijkstra shortest path
+  - only applied for non-negative weighted graph
+  - Algorithm: a subgraph(a tree rooted by start vertex) is growing while adding vertices into it, select the vertex with minimum distance, `relax` each adjacent of it, repeat until visited all vertices connected to the start vertex
+  - `IndexMinPQ` is used for selecting the vertex with minimum distance, `upsert` is convinient in `relax`
+
+### Acyclic shortest/longest path
+  - can applied to graph with negative weights
+  - `relax` each vertex in topological order, because `v` is visited before all its' adjacents, so `dist_to[v]` is safe to calculate adjacents' distance
+  - `Acyclic` graph has `fn topo_order()` which clearly expressed the algorithm's requirement
 
 ### Bellman Ford
-    - `Result<WeightedPath<E>, Cycle>` express the result of the algorithm, either a shortest path found, or an cycle detected
-    - `Iterator::flatten` in `Graph`
+  - can be applied to graph with cycles, but cyclic graphs have no shortest path
+  - `Result<WeightedPath<E>, Cycle>` express the result of the algorithm, either a shortest path found, or an cycle detected
+  - `Iterator::flatten` is convinient in  `Graph`
 
 ## Known Issues
   - impl can't disjoint based on associated type, e.g.

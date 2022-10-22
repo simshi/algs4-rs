@@ -6,6 +6,10 @@ use super::WeightedDirectedEdge;
 
 use std::collections::VecDeque;
 
+/// HasBellmanFordSP
+///
+/// Bellman-Ford's algorithm can be applied to any directed
+/// negative/non-negative graphs.
 pub trait HasBellmanFordSP<E: Directed + Weighted> {
     fn bellmanford_sp(&self, s: usize) -> Result<WeightedPath<E>, Cycle>;
 }
@@ -63,7 +67,7 @@ impl BellmanfordSP {
     {
         for e in g.adj(v) {
             let w = e.to();
-            if sp.dist_to[w] > sp.dist_to[v] + e.weight() {
+            if sp.dist_to[v] + e.weight() < sp.dist_to[w] {
                 sp.dist_to[w] = sp.dist_to[v] + e.weight();
                 sp.edge_to[w] = Some(e);
 

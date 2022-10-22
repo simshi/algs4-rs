@@ -79,8 +79,8 @@ pub trait MutableGraph: Graph {
 
 /// Directed acyclic graph
 ///
-/// a DAG can be sorted by topological order, and it's converted from other
-/// graphs which passed the cyclic detection.
+/// A DAG is generated from other graphs which passed the cyclic detection,
+/// and it can be sorted by topological order.
 pub trait Acyclic: Graph + TryFrom<Self::Graph> + Sized {
     type Graph: Graph;
 
