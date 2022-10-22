@@ -1,6 +1,7 @@
 use super::base::*;
 use super::edge::*;
 
+#[derive(Clone)]
 pub struct UndirectedGraph {
 	e: usize,
 	adj: Vec<Vec<UndirectedEdge>>,

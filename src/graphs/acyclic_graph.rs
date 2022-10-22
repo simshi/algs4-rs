@@ -6,6 +6,7 @@ use super::dfs_order::*;
 use super::edge::*;
 use super::EdgeWeightedDirectedGraph;
 
+#[derive(Clone)]
 pub struct EdgeWeightedDAG<G>
 where
     G: Graph<Edge = WeightedDirectedEdge>,

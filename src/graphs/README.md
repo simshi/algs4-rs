@@ -12,6 +12,7 @@
   - users can implement their own concrete types (which `impl` `Graph` and `Edge`)
 
 ## Algorithms
+### Description
   - apply algorithms on various kinds of graphs based on trait bounds, e.g.
       ``` rust
       // DFS order applied only to directed graphs
@@ -34,40 +35,47 @@
       | Acyclic Shortest/Longest Path | Acyclic        | Directed+Weighted    |
       | Bellman Ford Shortest Path    | -              | Directed+Weighted    |
 
-### Description
-  - Reversed (not `fn reverse(&mut self)`)
+### Reversed (not `fn reverse(&mut self)`)
+  - Reversing a directed graph by making a new graph with all `edge.reversed()`
+  - TODO: impl<G, MG> From<G> for MG or impl<G> Reversed<G> for DirectedGraph?
 
-    - Reversing a directed graph by making a new graph with all `edge.reversed()`
-    - TODO: impl<G, MG> From<G> for MG or impl<G> Reversed<G> for DirectedGraph?
+### DFS Order
+  - implemented as `Iterator` by a stack
 
-  - DFS Order: implemented as `Iterator` by a stack
-  - **Union Find**
-    - to solve dynamic connectivity
-    - connect small tree to larger tree to get lower level tree
-    - do path compression in `union`
-  - **Minimum Spanning Tree**
-    - a spanning tree with minimum sum(weight of edges), in a weighted undirected graph
-    - implemented for all undirected weighted graphs
-    - Prim MST in eager approach(`E+VlogV`): for each v added into the growing tree; for e in v.adj(); upsert e; done; done; max V-1 in IndexMinPQ, so `V*LogV`; and each edge is visited to check `marked[w]`, so `E+VlogV`.
-    - Kruskal(`ElogE`): for edge in MinPQ(edges).pop(); if u,v not connected add to tree, if tree.edges.len()==V-1 break; done.
-    - `IndexMinPQ::upsert` make code clear
-  - **Connected Components**
-    - a connected component of an undirected graph is a connected subgraph that is not part of any larger connected subgraph.
-    - algorithm: use DFS to traversal from a vertex, assign a subgraph id to them; To handle a forest, loop all unmarked vertices as a subgraph root.
-  - **Strongly connected components**
-    - A graph is said to be strongly connected if every vertex is reachable from every other vertex. The strongly connected components of an arbitrary directed graph form a partition into subgraphs that are themselves strongly connected.
-    - Kosaraju-Shrir's algorithm: 生成G的反图Gr，求解Gr的反向后序遍历（强连通分量是一个环，理论上没有拓扑序列，但是**将G的每个强连通分量看着一个点**时，即可拓扑排序Gr），最后根据此序列DFS原图G，每次DFS即可得一个强连通分量.
-     ```
-     例：
-     原图G：|A|->B->|C|, A、C是强连通分量，B是单顶点，
-     反向图Gr：|A|<-B<-|C|，
-     对Gr（近似）拓扑排序后，起点必然是|C|的一个顶点v，
-     从v开始DFS原图G可得第一个分量C，然后序列到B，第二个分量只含B，最后得到A，求解完成.
-     ```
-    - an imporovement: elimated `count` for component's id, calculated by the length of `sizes:Vec<usize>`
-  - Acyclic shortest path
+### **Union Find**
+  - to solve dynamic connectivity
+  - connect small tree to larger tree to get lower level tree
+  - do path compression in `union`
+
+### **Minimum Spanning Tree**
+  - a spanning tree with minimum sum(weight of edges), in a weighted undirected graph
+  - implemented for all undirected weighted graphs
+  - Prim MST in eager approach(`E+VlogV`): for each v added into the growing tree; for e in v.adj(); upsert e; done; done; max V-1 in IndexMinPQ, so `V*LogV`; and each edge is visited to check `marked[w]`, so `E+VlogV`.
+  - Kruskal(`ElogE`): for edge in MinPQ(edges).pop(); if u,v not connected add to tree, if tree.edges.len()==V-1 break; done.
+  - `IndexMinPQ::upsert` make code clear
+
+### **Connected Components**
+  - a connected component of an undirected graph is a connected subgraph that is not part of any larger connected subgraph.
+  - algorithm: use DFS to traversal from a vertex, assign a subgraph id to them; To handle a forest, loop all unmarked vertices as a subgraph root.
+
+### **Strongly connected components**
+  - A graph is said to be strongly connected if every vertex is reachable from every other vertex. The strongly connected components of an arbitrary directed graph form a partition into subgraphs that are themselves strongly connected.
+  - Kosaraju-Shrir's algorithm: 生成G的反图Gr，求解Gr的反向后序遍历（强连通分量是一个环，理论上没有拓扑序列，但是**将G的每个强连通分量看着一个点**时，即可拓扑排序Gr），最后根据此序列DFS原图G，每次DFS即可得一个强连通分量.
+
+    > **例**：
+    > - 原图G：|A|->B->|C|, A、C是强连通分量，B是单顶点;
+    > - 反向图Gr：|A|<-B<-|C|;
+    >
+    > 1. 对Gr（近似）拓扑排序后，起点必然是|C|的一个顶点v，
+    > 2. 从v开始DFS原图G可得第一个分量C
+    > 3. 然后序列到B，第二个分量只含B
+    > 4. 最后得到A，求解完成.
+  - an imporovement: elimated `count` for component's id, calculated by the length of `sizes:Vec<usize>`
+
+### Acyclic shortest path
     - `Acyclic` graph has `fn topo_order()` which clearly expressed the algorithm's requirement
-  - Bellman Ford
+
+### Bellman Ford
     - `Result<WeightedPath<E>, Cycle>` express the result of the algorithm, either a shortest path found, or an cycle detected
     - `Iterator::flatten` in `Graph`
 

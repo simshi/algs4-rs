@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn one_edge() {
         let mut g = EWDG::new(3);
-        g.add_edge(&WeightedDirectedEdge::new(0, 1, 1.0));
+        g.add_edge(WeightedDirectedEdge::new(0, 1, 1.0));
 
         let ag = EdgeWeightedDAG::try_from(g).unwrap();
         let sp = ag.acyclic_sp(0);
@@ -141,7 +141,7 @@ mod tests {
         ];
         let mut g = EWDG::new(8);
         for e in ewdag {
-            g.add_edge(&WeightedDirectedEdge::new(e.0, e.1, e.2));
+            g.add_edge(WeightedDirectedEdge::new(e.0, e.1, e.2));
         }
 
         let ag = EdgeWeightedDAG::try_from(g);
@@ -203,7 +203,7 @@ mod tests {
         ];
         let mut g = EWDG::new(8);
         for e in ewdag {
-            g.add_edge(&WeightedDirectedEdge::new(e.0, e.1, e.2));
+            g.add_edge(WeightedDirectedEdge::new(e.0, e.1, e.2));
         }
 
         let ag = EdgeWeightedDAG::try_from(g);

@@ -2,24 +2,26 @@ use super::base::*;
 
 /// Reversed
 ///
-/// A directed edge can be reversed
-pub trait Reversed<E: Directed> {
+/// generates a reversed graph from a directed graph
+pub trait Reversed: Graph {
+    // TODO: associated type bounds are unstable
+    // pub trait Reversed: Graph<Edge: Directed> {
     fn reversed(&self) -> Self;
 }
-
-// Any directed graph can be reversed by reversing all its edges.
-impl<G, E: Directed> Reversed<E> for G
+// implement Reversed for all mutuable directed graphs
+impl<G, E> Reversed for G
 where
+    E: Directed,
     G: MutableGraph<Edge = E>,
 {
     fn reversed(&self) -> Self {
-        let mut r = Self::new(self.v_size());
-        for v in 0..self.v_size() {
-            for e in self.adj(v) {
-                r.add_edge(&e.reversed());
+        let mut gr = Self::new(self.v_size());
+        for i in 0..self.v_size() {
+            for e in self.adj(i) {
+                gr.add_edge(e.reversed());
             }
         }
-        r
+        gr
     }
 }
 
@@ -31,9 +33,9 @@ mod tests {
     #[test]
     fn empty() {
         let g = DirectedGraph::new(1);
-        let r = g.reversed();
-        assert_eq!(1, r.v_size());
-        assert_eq!(None, r.adj(0).next());
+        let g = g.reversed();
+        assert_eq!(1, g.v_size());
+        assert_eq!(None, g.adj(0).next());
     }
 
     #[test]

@@ -65,7 +65,7 @@ mod tests {
     #[test]
     fn one_edge() {
         let mut g = ENNWDG::new(3);
-        g.add_edge(&NNWDE::new(0, 1, 1.0).unwrap());
+        g.add_edge(NNWDE::new(0, 1, 1.0).unwrap());
 
         let sp = g.dijkstra_sp(0);
 
@@ -100,7 +100,7 @@ mod tests {
         ];
         let mut g = ENNWDG::new(8);
         for e in ewd {
-            g.add_edge(&NNWDE::new(e.0, e.1, e.2).unwrap());
+            g.add_edge(NNWDE::new(e.0, e.1, e.2).unwrap());
         }
 
         let sp = g.dijkstra_sp(0);

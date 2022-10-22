@@ -1,6 +1,7 @@
 use super::base::*;
 use super::edge::*;
 
+#[derive(Clone)]
 pub struct EdgeWeightedUndirectedGraph {
     e: usize,
     adj: Vec<Vec<WeightedUndirectedEdge>>,
@@ -36,6 +37,7 @@ impl Graph for EdgeWeightedUndirectedGraph {
     }
 }
 
+#[derive(Clone)]
 pub struct EdgeWeightedDirectedGraph {
     e: usize,
     adj: Vec<Vec<WeightedDirectedEdge>>,
@@ -62,12 +64,13 @@ impl MutableGraph for EdgeWeightedDirectedGraph {
         }
     }
 
-    fn add_edge(&mut self, edge: &Self::Edge) {
-        self.adj[edge.from()].push(*edge);
+    fn add_edge(&mut self, edge: Self::Edge) {
+        self.adj[edge.from()].push(edge);
         self.e += 1;
     }
 }
 
+#[derive(Clone)]
 pub struct EdgeNonNegativeWeightedDirectedGraph {
     e: usize,
     adj: Vec<Vec<NonNegativeWeightedDirectedEdge>>,
@@ -94,8 +97,8 @@ impl MutableGraph for EdgeNonNegativeWeightedDirectedGraph {
         }
     }
 
-    fn add_edge(&mut self, edge: &Self::Edge) {
-        self.adj[edge.from()].push(*edge);
+    fn add_edge(&mut self, edge: Self::Edge) {
+        self.adj[edge.from()].push(edge);
         self.e += 1;
     }
 }

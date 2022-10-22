@@ -55,10 +55,9 @@ pub trait NonNegative: Weighted {}
 /// Graph
 ///
 /// A graph consists of vertices and edges.
-pub trait Graph {
+pub trait Graph: Clone {
     type Edge: Edge;
 
-    // fn new(v: usize) -> Self;
     fn v_size(&self) -> usize;
     fn e_size(&self) -> usize;
     // fn adj(&self, v: usize) -> impl Iterator<Item = Self::Edge> + '_;
@@ -75,7 +74,7 @@ pub trait Graph {
 /// A mutuable graph can add edges to it.
 pub trait MutableGraph: Graph {
     fn new(v: usize) -> Self;
-    fn add_edge(&mut self, edge: &Self::Edge);
+    fn add_edge(&mut self, edge: Self::Edge);
 }
 
 /// Directed acyclic graph

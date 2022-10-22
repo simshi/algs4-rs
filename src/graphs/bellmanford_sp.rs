@@ -91,7 +91,7 @@ impl BellmanfordSP {
     {
         let mut cg = EdgeWeightedDirectedGraph::new(g.v_size());
         for e in sp.edge_to.iter().flatten() {
-            cg.add_edge(&WeightedDirectedEdge::new(e.from(), e.to(), e.weight()));
+            cg.add_edge(WeightedDirectedEdge::new(e.from(), e.to(), e.weight()));
         }
 
         CycleDetection::detect_directed(&cg)
@@ -122,7 +122,7 @@ mod tests {
     #[test]
     fn one_edge() {
         let mut g = EWDG::new(3);
-        g.add_edge(&WDE::new(0, 1, 1.0));
+        g.add_edge(WDE::new(0, 1, 1.0));
 
         let r = g.bellmanford_sp(0);
         assert!(r.is_ok());
@@ -159,7 +159,7 @@ mod tests {
         ];
         let mut g = EWDG::new(8);
         for e in ewd {
-            g.add_edge(&WDE::new(e.0, e.1, e.2));
+            g.add_edge(WDE::new(e.0, e.1, e.2));
         }
         let r = g.bellmanford_sp(0);
         assert!(r.is_ok());
@@ -229,7 +229,7 @@ mod tests {
         ];
         let mut g = ENNWDG::new(8);
         for e in ewd {
-            g.add_edge(&NNWDE::new(e.0, e.1, e.2).unwrap());
+            g.add_edge(NNWDE::new(e.0, e.1, e.2).unwrap());
         }
 
         let r = g.bellmanford_sp(0);
@@ -295,7 +295,7 @@ mod tests {
         ];
         let mut g = EWDG::new(8);
         for e in ewdag {
-            g.add_edge(&WeightedDirectedEdge::new(e.0, e.1, e.2));
+            g.add_edge(WeightedDirectedEdge::new(e.0, e.1, e.2));
         }
         let ag = EdgeWeightedDAG::try_from(g).unwrap();
 
@@ -352,7 +352,7 @@ mod tests {
         ];
         let mut g = EWDG::new(6);
         for e in ewd {
-            g.add_edge(&WDE::new(e.0, e.1, e.2));
+            g.add_edge(WDE::new(e.0, e.1, e.2));
         }
         let r = g.bellmanford_sp(0);
 

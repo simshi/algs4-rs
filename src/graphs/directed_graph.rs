@@ -1,6 +1,7 @@
 use super::base::*;
 use super::edge::*;
 
+#[derive(Clone)]
 pub struct DirectedGraph {
     e: usize,
     adj: Vec<Vec<DirectedEdge>>,
@@ -25,6 +26,7 @@ impl Graph for DirectedGraph {
         Box::new(self.adj[v].iter().cloned())
     }
 }
+
 impl MutableGraph for DirectedGraph {
     fn new(v: usize) -> Self {
         DirectedGraph {
@@ -33,9 +35,9 @@ impl MutableGraph for DirectedGraph {
         }
     }
 
-    fn add_edge(&mut self, edge: &Self::Edge) {
+    fn add_edge(&mut self, edge: Self::Edge) {
         let v = edge.from();
-        self.adj[v].push(*edge);
+        self.adj[v].push(edge);
         self.e += 1;
     }
 }
