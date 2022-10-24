@@ -33,7 +33,7 @@ where
         self.get(key).is_some()
     }
     pub fn get(&self, key: &K) -> Option<&V> {
-        let mut i = self.hash(&key);
+        let mut i = self.hash(key);
         while let Some(ref k) = self.keys[i] {
             if k == key {
                 return self.values[i].as_ref();
@@ -62,7 +62,7 @@ where
         self.n += 1;
     }
     pub fn delete(&mut self, key: &K) {
-        let mut i = self.hash(&key);
+        let mut i = self.hash(key);
         let mut found = false;
         while let Some(ref k) = self.keys[i] {
             if k == key {

@@ -8,9 +8,16 @@
 - separated `keys[]` and `values[]` may lead to better cache-friendly, due to most operations using keys only
 
 ## Binary Search Tree
-- idiomatic list definition: `type List<K, V> = Option<Box<Node<K, V>>>`
-- be careful with lifetime, but looks quite straightforward after figure out.
-- `delete` is the most complicated piece, requires rotating two elements in sub-tree, find by `min` and `delete_min` can't do the trick(due to ownership issue), so I wrote a `pop_min` which combine them together.
+- simple tree definition: `type Tree<K, V> = Option<Box<Node<K, V>>>`
+- be careful with lifetime, but looks quite straightforward after figure out: send ownership to functions which return back a (new) sub-tree. e.g.
+  ``` rust
+  let r = self.root.take();
+  self.root = tree_delete_min(r);
+  ```
+- `delete` creates a whole in the tree, we must fill it with a node from its' children:
+  - if one of left/right child is None, take another child as the node
+  - otherwise, `pop_min(node.right)` as the node, and set its' left child to old `node.left` (Optimization can be done: if left.size > right.size, `pop_max(node.left)` as the node).
+  - find by `min` and `delete_min` can't do the job(due to ownership issue), so `pop_min` is required.
 - bonus fun: implement `Iter` and `IntoIter`, `Iter` is implemented by iterating (inorder tree traversal) with a stack and a current pointer, not by a preallocated queue, which is more fun~.
 
 ## Red Black Tree

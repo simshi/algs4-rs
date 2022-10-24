@@ -1,17 +1,31 @@
 use std::cmp::Ordering;
 
-type List<K, V> = Option<Box<Node<K, V>>>;
+type Tree<K, V> = Option<Box<Node<K, V>>>;
 struct Node<K, V> {
     key: K,
     value: V,
-    left: List<K, V>,
-    right: List<K, V>,
+    left: Tree<K, V>,
+    right: Tree<K, V>,
     size: usize,
 }
+impl<K, V> Node<K, V> {
+    fn new(key: K, value: V) -> Self {
+        Node {
+            key,
+            value,
+            left: None,
+            right: None,
+            size: 1,
+        }
+    }
+}
 
+/// Binary Search Tree
+///
+/// A binary search tree is O(logN) in get/put/delete
 #[derive(Default)]
 pub struct BSTree<K, V> {
-    root: List<K, V>,
+    root: Tree<K, V>,
 }
 
 impl<K: Ord, V> BSTree<K, V> {
@@ -27,30 +41,30 @@ impl<K: Ord, V> BSTree<K, V> {
     }
 
     pub fn min(&self) -> Option<&K> {
-        self.root.as_ref().map(|p| self._min(p))
+        self.root.as_ref().map(|p| node_min(p))
     }
     pub fn max(&self) -> Option<&K> {
-        self.root.as_ref().map(|p| self._max(p))
+        self.root.as_ref().map(|p| node_max(p))
     }
     pub fn floor(&self, key: &K) -> Option<&K> {
-        self._floor(&self.root, key)
+        tree_floor(&self.root, key)
     }
     pub fn ceiling(&self, key: &K) -> Option<&K> {
-        self._ceiling(&self.root, key)
+        tree_ceiling(&self.root, key)
     }
     pub fn select(&self, i: usize) -> Option<&K> {
-        self._select(&self.root, i)
+        tree_select(&self.root, i)
     }
     pub fn rank(&self, key: &K) -> usize {
-        self._rank(&self.root, key)
+        tree_rank(&self.root, key)
     }
 
     pub fn get(&self, key: &K) -> Option<&V> {
-        self.root.as_ref().and_then(|p| self._get(p, key))
+        self.root.as_ref().and_then(|p| node_get(p, key))
     }
     pub fn put(&mut self, key: K, value: V) {
         let a = self.root.take();
-        self.root = Some(self._put(a, key, value));
+        self.root = Some(node_put(a, key, value));
     }
 
     pub fn contains(&self, key: &K) -> bool {
@@ -59,32 +73,32 @@ impl<K: Ord, V> BSTree<K, V> {
 
     pub fn delete_min(&mut self) {
         let r = self.root.take();
-        self.root = self._delete_min(r);
+        self.root = tree_delete_min(r);
     }
     pub fn delete_max(&mut self) {
         let r = self.root.take();
-        self.root = self._delete_max(r);
+        self.root = tree_delete_max(r);
     }
     pub fn delete(&mut self, key: &K) {
         let r = self.root.take();
-        self.root = self._delete(r, key);
+        self.root = tree_delete(r, key);
     }
     pub fn pop_min(&mut self) -> Option<(K, V)> {
-        self.root.take().and_then(|b| {
-            let (r, x) = self._pop_min(b);
+        self.root.take().map(|b| {
+            let (r, x) = node_pop_min(b);
             self.root = r;
-            x.map(|b| (b.key, b.value))
+            (x.key, x.value)
         })
     }
 
     pub fn keys(&self) -> Vec<&K> {
         let mut q: Vec<&K> = Vec::new();
-        self._keys(&self.root, &mut q);
+        tree_keys(&self.root, &mut q);
         q
     }
     pub fn keys_range(&self, lo: &K, hi: &K) -> Vec<&K> {
         let mut q: Vec<&K> = Vec::new();
-        self._keys_range(&self.root, &mut q, lo, hi);
+        tree_keys_range(&self.root, &mut q, lo, hi);
         q
     }
     pub fn iter(&self) -> Iter<'_, K, V> {
@@ -99,154 +113,147 @@ impl<K: Ord, V> BSTree<K, V> {
     }
 }
 
-// private methods
-impl<K: Ord, V> BSTree<K, V> {
-    fn _len(&self, list: &List<K, V>) -> usize {
-        list.as_ref().map_or(0, |p| p.size)
-    }
+// impl<K,V> Tree<K, V>
+fn tree_size<K: Ord, V>(t: &Tree<K, V>) -> usize {
+    t.as_ref().map_or(0, |p| p.size)
+}
 
-    fn _min<'a>(&self, node: &'a Node<K, V>) -> &'a K {
-        node.left.as_ref().map_or(&node.key, |v| self._min(&v))
-    }
-    fn _max<'a>(&self, node: &'a Node<K, V>) -> &'a K {
-        node.right.as_ref().map_or(&node.key, |v| self._max(&v))
-    }
-
-    fn _floor<'a>(&self, list: &'a List<K, V>, key: &K) -> Option<&'a K> {
-        list.as_ref().and_then(|p| match key.cmp(&p.key) {
-            Ordering::Equal => Some(&p.key),
-            Ordering::Less => self._floor(&p.left, key),
-            Ordering::Greater => self._floor(&p.right, key).or(Some(&p.key)),
-        })
-    }
-    fn _ceiling<'a>(&self, list: &'a List<K, V>, key: &K) -> Option<&'a K> {
-        list.as_ref().and_then(|p| match key.cmp(&p.key) {
-            Ordering::Equal => Some(&p.key),
-            Ordering::Less => self._ceiling(&p.left, key).or(Some(&p.key)),
-            Ordering::Greater => self._ceiling(&p.right, key),
-        })
-    }
-    fn _select<'a>(&self, list: &'a List<K, V>, i: usize) -> Option<&'a K> {
-        list.as_ref().and_then(|b| {
-            let ls = b.left.as_ref().map_or(0, |b| b.size);
-            match i.cmp(&ls) {
-                Ordering::Equal => Some(&b.key),
-                Ordering::Less => self._select(&b.left, i),
-                Ordering::Greater => self._select(&b.right, i - ls - 1),
-            }
-        })
-    }
-    fn _rank(&self, list: &List<K, V>, key: &K) -> usize {
-        list.as_ref().map_or(0, |b| match key.cmp(&b.key) {
-            Ordering::Equal => b.left.as_ref().map_or(0, |b| b.size),
-            Ordering::Less => self._rank(&b.left, key),
-            Ordering::Greater => self._rank(&b.left, key) + 1 + self._rank(&b.right, key),
-        })
-    }
-
-    fn _get<'a>(&self, node: &'a Node<K, V>, key: &K) -> Option<&'a V> {
-        match key.cmp(&node.key) {
-            Ordering::Equal => Some(&node.value),
-            Ordering::Less => node.left.as_ref().and_then(|n| self._get(&n, key)),
-            Ordering::Greater => node.right.as_ref().and_then(|n| self._get(&n, key)),
+fn tree_floor<'a, K: Ord, V>(t: &'a Tree<K, V>, key: &K) -> Option<&'a K> {
+    t.as_ref().and_then(|p| match key.cmp(&p.key) {
+        Ordering::Equal => Some(&p.key),
+        Ordering::Less => tree_floor(&p.left, key),
+        Ordering::Greater => tree_floor(&p.right, key).or(Some(&p.key)),
+    })
+}
+fn tree_ceiling<'a, K: Ord, V>(t: &'a Tree<K, V>, key: &K) -> Option<&'a K> {
+    t.as_ref().and_then(|p| match key.cmp(&p.key) {
+        Ordering::Equal => Some(&p.key),
+        Ordering::Less => tree_ceiling(&p.left, key).or(Some(&p.key)),
+        Ordering::Greater => tree_ceiling(&p.right, key),
+    })
+}
+fn tree_select<K: Ord, V>(t: &Tree<K, V>, i: usize) -> Option<&K> {
+    t.as_ref().and_then(|b| {
+        let ls = b.left.as_ref().map_or(0, |b| b.size);
+        match i.cmp(&ls) {
+            Ordering::Equal => Some(&b.key),
+            Ordering::Less => tree_select(&b.left, i),
+            Ordering::Greater => tree_select(&b.right, i - ls - 1),
         }
-    }
-    fn _put(&mut self, list: List<K, V>, key: K, value: V) -> Box<Node<K, V>> {
-        match list {
-            None => Box::new(Node {
-                key,
-                value,
-                left: None,
-                right: None,
-                size: 1,
-            }),
-            Some(mut b) => {
-                match key.cmp(&b.key) {
-                    Ordering::Equal => b.value = value,
-                    Ordering::Less => b.left = Some(self._put(b.left, key, value)),
-                    Ordering::Greater => b.right = Some(self._put(b.right, key, value)),
-                };
-                b.size = 1 + self._len(&b.left) + self._len(&b.right);
-                b
-            }
-        }
-    }
+    })
+}
+fn tree_rank<K: Ord, V>(t: &Tree<K, V>, key: &K) -> usize {
+    t.as_ref().map_or(0, |b| match key.cmp(&b.key) {
+        Ordering::Equal => b.left.as_ref().map_or(0, |b| b.size),
+        Ordering::Less => tree_rank(&b.left, key),
+        Ordering::Greater => tree_rank(&b.left, key) + 1 + tree_rank(&b.right, key),
+    })
+}
 
-    fn _delete_min(&mut self, list: List<K, V>) -> List<K, V> {
-        list.and_then(|mut b| match b.left {
-            None => b.right,
-            Some(l) => {
-                b.left = self._delete_min(Some(l));
-                b.size = 1 + self._len(&b.left) + self._len(&b.right);
-                Some(b)
-            }
-        })
-    }
-    fn _delete_max(&mut self, list: List<K, V>) -> List<K, V> {
-        list.and_then(|mut b| match b.right {
-            None => b.left,
-            Some(r) => {
-                b.right = self._delete_max(Some(r));
-                b.size = 1 + self._len(&b.left) + self._len(&b.right);
-                Some(b)
-            }
-        })
-    }
-    fn _delete(&mut self, list: List<K, V>, key: &K) -> List<K, V> {
-        list.and_then(|mut b| {
-            match key.cmp(&b.key) {
-                Ordering::Less => b.left = self._delete(b.left, key),
-                Ordering::Greater => b.right = self._delete(b.right, key),
-                _ => {
-                    if b.right.is_none() {
-                        return b.left;
-                    }
-                    if b.left.is_none() {
-                        return b.right;
-                    }
-
-                    // use min of right sub-tree as the new node
-                    let t = b.left.take();
-                    let (child, x) = self._pop_min(b.right.unwrap());
-                    b = x.unwrap();
-                    b.right = child;
-                    b.left = t;
-                }
-            }
-            b.size = 1 + self._len(&b.left) + self._len(&b.right);
+fn tree_delete_min<K: Ord, V>(t: Tree<K, V>) -> Tree<K, V> {
+    t.and_then(|mut b| match b.left {
+        None => b.right,
+        Some(l) => {
+            b.left = tree_delete_min(Some(l));
+            b.size = 1 + tree_size(&b.left) + tree_size(&b.right);
             Some(b)
-        })
-    }
-    fn _pop_min(&mut self, mut b: Box<Node<K, V>>) -> (List<K, V>, List<K, V>) {
-        match b.left {
-            None => (b.right.take(), Some(b)),
-            Some(l) => {
-                let (child, min) = self._pop_min(l);
-                b.left = child;
-                b.size = 1 + self._len(&b.left) + self._len(&b.right);
-                (Some(b), min)
-            }
         }
-    }
+    })
+}
+fn tree_delete_max<K: Ord, V>(t: Tree<K, V>) -> Tree<K, V> {
+    t.and_then(|mut b| match b.right {
+        None => b.left,
+        Some(r) => {
+            b.right = tree_delete_max(Some(r));
+            b.size = 1 + tree_size(&b.left) + tree_size(&b.right);
+            Some(b)
+        }
+    })
+}
+fn tree_delete<K: Ord, V>(t: Tree<K, V>, key: &K) -> Tree<K, V> {
+    t.and_then(|mut b| {
+        match key.cmp(&b.key) {
+            Ordering::Less => b.left = tree_delete(b.left, key),
+            Ordering::Greater => b.right = tree_delete(b.right, key),
+            _ => {
+                if b.right.is_none() {
+                    return b.left;
+                }
+                if b.left.is_none() {
+                    return b.right;
+                }
 
-    fn _keys<'a>(&self, list: &'a List<K, V>, q: &mut Vec<&'a K>) {
-        if let Some(ref b) = list {
-            self._keys(&b.left, q);
+                // use min of right sub-tree as the new node
+                let t = b.left.take();
+                let (child, x) = node_pop_min(b.right.unwrap());
+                b = x;
+                b.right = child;
+                b.left = t;
+            }
+        }
+        b.size = 1 + tree_size(&b.left) + tree_size(&b.right);
+        Some(b)
+    })
+}
+
+fn tree_keys<'a, K: Ord, V>(t: &'a Tree<K, V>, q: &mut Vec<&'a K>) {
+    if let Some(ref b) = t {
+        tree_keys(&b.left, q);
+        q.push(&b.key);
+        tree_keys(&b.right, q);
+    }
+}
+fn tree_keys_range<'a, K: Ord, V>(t: &'a Tree<K, V>, q: &mut Vec<&'a K>, lo: &K, hi: &K) {
+    if let Some(ref b) = t {
+        if *lo < b.key {
+            tree_keys_range(&b.left, q, lo, hi);
+        }
+        if *lo <= b.key && b.key <= *hi {
             q.push(&b.key);
-            self._keys(&b.right, q);
+        }
+        if *hi > b.key {
+            tree_keys_range(&b.right, q, lo, hi);
         }
     }
-    fn _keys_range<'a>(&self, list: &'a List<K, V>, q: &mut Vec<&'a K>, lo: &K, hi: &K) {
-        if let Some(ref b) = list {
-            if *lo < b.key {
-                self._keys_range(&b.left, q, lo, hi);
-            }
-            if *lo <= b.key && b.key <= *hi {
-                q.push(&b.key);
-            }
-            if *hi > b.key {
-                self._keys_range(&b.right, q, lo, hi);
-            }
+}
+
+// impl<K, V> Node<K, V>
+fn node_min<K: Ord, V>(node: &Node<K, V>) -> &K {
+    node.left.as_ref().map_or(&node.key, |v| node_min(v))
+}
+fn node_max<K: Ord, V>(node: &Node<K, V>) -> &K {
+    node.right.as_ref().map_or(&node.key, |v| node_max(v))
+}
+
+fn node_get<'a, K: Ord, V>(node: &'a Node<K, V>, key: &K) -> Option<&'a V> {
+    match key.cmp(&node.key) {
+        Ordering::Equal => Some(&node.value),
+        Ordering::Less => node.left.as_ref().and_then(|n| node_get(n, key)),
+        Ordering::Greater => node.right.as_ref().and_then(|n| node_get(n, key)),
+    }
+}
+fn node_put<K: Ord, V>(t: Tree<K, V>, key: K, value: V) -> Box<Node<K, V>> {
+    match t {
+        None => Box::new(Node::new(key, value)),
+        Some(mut b) => {
+            match key.cmp(&b.key) {
+                Ordering::Equal => b.value = value,
+                Ordering::Less => b.left = Some(node_put(b.left, key, value)),
+                Ordering::Greater => b.right = Some(node_put(b.right, key, value)),
+            };
+            b.size = 1 + tree_size(&b.left) + tree_size(&b.right);
+            b
+        }
+    }
+}
+fn node_pop_min<K: Ord, V>(mut b: Box<Node<K, V>>) -> (Tree<K, V>, Box<Node<K, V>>) {
+    match b.left {
+        None => (b.right.take(), b),
+        Some(l) => {
+            let (child, min) = node_pop_min(l);
+            b.left = child;
+            b.size = 1 + tree_size(&b.left) + tree_size(&b.right);
+            (Some(b), min)
         }
     }
 }
@@ -281,7 +288,7 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // push left childen for visiting (travel to the min)
-        while let Some(ref l) = self.current {
+        while let Some(l) = self.current {
             self.stack.push(l);
             self.current = l.left.as_deref();
         }
