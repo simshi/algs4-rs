@@ -1,0 +1,37 @@
+{
+	"tasks": [
+		{
+			"label": "Rust: cargo test --no-run",
+			"type": "cargo",
+			"command": "test",
+			"args": [
+				"--no-run"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+		},
+		{
+			"label": "Rust: cargo doc and open",
+			"type": "cargo",
+			"command": "doc",
+			"args": [
+				"--open"
+			],
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+		},
+		{
+			"label": "Rust: cargo test",
+			"type": "cargo",
+			"command": "test",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "build",
+		},
+	]
+}

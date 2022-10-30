@@ -1,12 +1,15 @@
 # Learning Basic Algorithms in Rust
 - Idiomatic Rust (`cargo clippy`)
-- [Algorithms, 4th Edition by Robert Sedgewick](https://algs4.cs.princeton.edu/)
+- [Algorithms, 4th Edition by Robert Sedgewick](https://algs4.cs.princeton.edu/) && other algorithms
 
-## Content
+## From Algorithms
   - [x] [Sorting](./src/sorting/README.md)
   - [x] [Searching](./src/searching/README.md)
   - [x] [Graph](./src/graphs/README.md)
   - [x] [String](./src/strings/README.md)
+
+## Other
+  - [ ] [Dyanamic Planning](./src/dp/../../README.md)
 
 ## Test && Benchmark
  - `cargo run --release --bin union_find < data/largeUF.txt`
