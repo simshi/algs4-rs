@@ -49,33 +49,39 @@ pub fn longest_palindrome_dp(s: &str) -> String {
     if n < 2 {
         return s.to_owned();
     }
-    // 假设只有英文数字
-    // 避免循环中使用s.chars().nth(i).unwrap()，而且enumerate()也不方便
-    let s = s.as_bytes();
-    // let s = s.chars().collect::<Vec<_>>();
 
-    // 状态：dp[i][j]表示[i, j]区间是否是回文, 为简化i-1，j+1溢出，上下左右各+1
+    // 避免循环中使用s.chars().nth(i).unwrap()，而且enumerate()也不方便
+    // let s = s.chars().collect::<Vec<_>>();
+    let s = s.as_bytes(); // 假设只有英文数字
+
+    // 状态：dp[i][j]表示[i, j]区间是否是回文, 为避免i-1，j+1溢出判断，上下左右各+1
     let mut dp = vec![vec![false; n + 2]; n + 2];
-    let mut ans = (1, 0); // 让"abc"的回文至少返回"a"，所以初始化为1
+    // ans: (index, length)，让"abc"的回文至少返回"a"，所以length初始化为1
+    let mut ans = (0, 1);
+    // 先处理单个字符，置为true，避免下面状态转移方程循环内判断
     for i in 0..n {
         let (row, col) = (i + 1, i + 1);
         dp[row][col] = true;
+        if i + 1 < n && s[i] == s[i + 1] {
+            dp[i + 1][i + 2] = true;
+            ans = (i, 2);
+        }
     }
-    // 状态转移方程： 必须先判断字串i..=j是否为回文，然后才能判断i-1..=j+1
+    // 状态转移方程： 先判断字串i..=j是否为回文，然后扩大范围i-1..=j+1
     // 按距离开始扫描，即扫描window(d)，然后再是window(d+1)
-    for d in 1..n {
+    for d in 2..n {
         for i in 0..n - d {
             let (row, col) = (i + 1, i + d + 1);
-            if s[i] == s[i + d] && (d == 1 || dp[row + 1][col - 1]) {
+            if s[i] == s[i + d] && dp[row + 1][col - 1] {
                 dp[row][col] = true;
-                if d + 1 > ans.0 {
-                    ans = (d + 1, i);
+                if d + 1 > ans.1 {
+                    ans = (i, d + 1);
                 }
             }
         }
     }
 
-    String::from_utf8(s[ans.1..(ans.1 + ans.0)].to_vec()).unwrap()
+    String::from_utf8(s[ans.0..(ans.0 + ans.1)].to_vec()).unwrap()
     // s.into_iter().skip(ans.1).take(ans.0).collect()
 }
 
