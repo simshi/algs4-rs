@@ -1,66 +1,84 @@
-#![feature(test)] // #[bench] is still experimental
+use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 
-extern crate test; // Even in '18 this is needed ... for reasons.
-                   // Normally you don't need this in '18 code.
-
-use test::{black_box, Bencher}; // `black_box` prevents `f` from being optimized away.
-
-// swap by temp variable is no difference for primitive types
-#[bench]
-fn lang_int_swap_by_copy(b: &mut Bencher) {
-    b.iter(|| {
-        let mut arr = [1u32, 2u32];
-        let temp = arr[0];
-        black_box(arr[0] = arr[1]);
-        arr[1] = temp
+fn lang_int_swap_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("lang_int_swap");
+    group.bench_function("by_copy", |b| {
+        b.iter(|| {
+            let mut arr = [1u32, 2u32];
+            let temp = arr[0];
+            black_box(arr[0] = arr[1]);
+            arr[1] = temp;
+            black_box(arr)
+        })
     });
-}
 
-#[bench]
-fn lang_int_swap_inplace(b: &mut Bencher) {
-    b.iter(|| {
-        let mut arr = [1u32, 2u32];
-        black_box(arr.swap(0, 1))
+    group.bench_function("inplace", |b| {
+        b.iter(|| {
+            let mut arr = [1u32, 2u32];
+            black_box(arr.swap(0, 1))
+        })
     });
+
+    group.finish();
 }
 
 const S1: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz1234567890";
 const S2: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuwwxz0987654321";
 // swap by temp is clone, which requires memory allocation, the cost can't be ignored
 // the good thing about Rust is it makes the clone/copy explicit
-#[bench]
-fn lang_string_swap_by_copy(b: &mut Bencher) {
-    b.iter(|| {
-        let mut arr = [String::from(S1), String::from(S2)];
-        let temp = arr[0].clone();
-        black_box(arr[0] = arr[1].clone());
-        arr[1] = temp
+fn lang_string_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("lang_string");
+    let data = [String::from(S1), String::from(S2)];
+    group.bench_function("swap_by_copy", |b| {
+        b.iter_batched(
+            || data.clone(),
+            |mut arr| {
+                let temp = arr[0].clone();
+                black_box(arr[0] = arr[1].clone());
+                arr[1] = temp
+            },
+            BatchSize::SmallInput,
+        )
     });
+
+    group.bench_function("swap_by_empty_temp", |b| {
+        b.iter_batched(
+            || data.clone(),
+            |mut arr| {
+                // let temp = arr[0]; // cannot move here!
+                let mut temp = String::new();
+                std::mem::swap(&mut temp, &mut arr[0]);
+                black_box(arr.swap(0, 1));
+                std::mem::swap(&mut arr[1], &mut temp)
+            },
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("swap_inplace", |b| {
+        b.iter_batched(
+            || data.clone(),
+            |mut arr| black_box(arr.swap(0, 1)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("comparision", |b| {
+        b.iter_batched(
+            || (String::from(S1), String::from(S2)),
+            |(s1, s2)| {
+                black_box(s1 == s2);
+            },
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
 }
 
-#[bench]
-fn lang_string_swap_by_empty_temp(b: &mut Bencher) {
-    b.iter(|| {
-        let mut arr = [String::from(S1), String::from(S2)];
-        // let temp = arr[0]; // cannot move here!
-        let mut temp = String::new();
-        std::mem::swap(&mut temp, &mut arr[0]);
-        black_box(arr.swap(0, 1));
-        std::mem::swap(&mut arr[1], &mut temp)
-    });
+criterion_group! {
+    name = benches;
+    config = Criterion::default().sample_size(10);
+    targets = lang_int_swap_benches, lang_string_benches
 }
-
-#[bench]
-fn lang_string_swap_inplace(b: &mut Bencher) {
-    b.iter(|| {
-        let mut arr = [String::from(S1), String::from(S2)];
-        black_box(arr.swap(0, 1))
-    });
-}
-
-#[bench]
-fn lang_string_comparision(b: &mut Bencher) {
-    let s1 = String::from(S1);
-    let s2 = String::from(S1);
-    b.iter(move || s1 == s2);
-}
+criterion_main!(benches);

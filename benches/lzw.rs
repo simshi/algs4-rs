@@ -1,29 +1,47 @@
-#![feature(test)] // #[bench] is still experimental
-extern crate test;
-
-use rand::{thread_rng, Rng};
 use std::iter::repeat;
-use test::{black_box, Bencher};
+
+use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
+use rand::{thread_rng, Rng};
 
 use algs4_rs::strings::lzw::*;
 
-#[bench]
-fn lzw_compress_100_trie_st(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u8>().take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(compress(&arr)));
+fn lzw_compress_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("lzw_compress");
+    group.bench_function("100", |b| {
+        b.iter_batched(
+            || thread_rng().gen_iter::<u8>().take(100).collect::<Vec<_>>(),
+            |arr| black_box(compress(&arr)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("100k", |b| {
+        b.iter_batched(
+            || {
+                thread_rng()
+                    .gen_iter::<u8>()
+                    .take(100 * 1024)
+                    .collect::<Vec<_>>()
+            },
+            |arr| black_box(compress(&arr)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("100k_zero", |b| {
+        b.iter_batched(
+            || repeat(0).take(100 * 1024).collect::<Vec<_>>(),
+            |arr| black_box(compress(&arr)),
+            BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
 }
 
-#[bench]
-fn lzw_compress_100k_trie_st(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u8>()
-		.take(100 * 1024)
-		.collect::<Vec<_>>();
-	b.iter(|| black_box(compress(&arr)));
+criterion_group! {
+    name = benches;
+    config = Criterion::default().sample_size(10);
+    targets = lzw_compress_benches
 }
-
-#[bench]
-fn lzw_compress_100k_zero_trie_st(b: &mut Bencher) {
-	let arr = repeat(0).take(100 * 1024).collect::<Vec<_>>();
-	b.iter(|| black_box(compress(&arr)));
-}
+criterion_main!(benches);

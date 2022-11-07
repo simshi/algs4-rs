@@ -1,594 +1,131 @@
-#![feature(test)] // #[bench] is still experimental
+use std::iter;
 
-extern crate test; // Even in '18 this is needed ... for reasons.
-				   // Normally you don't need this in '18 code.
-
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::{thread_rng, Rng};
-use std::iter::repeat;
-use test::{black_box, Bencher}; // `black_box` prevents `f` from being optimized away.
 
 use algs4_rs::sorting::*;
 
 macro_rules! make_bench {
-	($name:ident, $sorter:ident, $count:expr) => {
-		#[bench]
-		fn $name(b: &mut Bencher) {
-			let arr = thread_rng()
-				.gen_iter::<u32>()
-				.take($count)
-				.collect::<Vec<_>>();
-			b.iter(|| {
-				let mut arr = arr.clone();
-				black_box($sorter(&mut arr));
-			})
-		}
-	};
-}
-
-#[bench]
-fn sort_7_base(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(7).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut _arr = arr.clone();
-	});
-}
-make_bench!(sort_7_insertion, insertion_sort, 7);
-make_bench!(sort_7_merge, merge_sort, 7);
-make_bench!(sort_7_merge_opt, merge_sort_opt, 7);
-make_bench!(sort_7_heap, heap_sort, 7);
-make_bench!(sort_7_heap_opt, heap_sort_opt, 7);
-make_bench!(sort_7_quick, quick_sort, 7);
-make_bench!(sort_7_quick3way, quick3way_sort, 7);
-make_bench!(sort_7_quick_opt, quick_sort_opt, 7);
-
-#[bench]
-fn sort_int15_base(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut _arr = arr.clone();
-	});
-}
-
-#[bench]
-fn sort_int15_insertion(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(insertion_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int15_shell(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(shell_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int15_merge(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int15_merge_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int15_quick(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int15_quick3way(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick3way_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int15_quick_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int15_builtin(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(arr.sort_unstable())
-	});
-}
-
-#[bench]
-fn sort_int15_heap(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int15_heap_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(15).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_base(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut _arr = arr.clone();
-	});
-}
-
-#[bench]
-fn sort_int100_insertion(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(insertion_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_shell(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(shell_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_merge(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_merge_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_quick(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_quick3way(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick3way_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_quick_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_builtin(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(arr.sort_unstable())
-	});
-}
-
-#[bench]
-fn sort_int100_heap(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int100_heap_opt(b: &mut Bencher) {
-	let arr = thread_rng().gen_iter::<u32>().take(100).collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_base(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(1000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut _arr = arr.clone();
-	});
-}
-
-#[bench]
-fn sort_int10k_insertion(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(insertion_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_shell(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(shell_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_merge(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_merge_opt(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_quick(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_quick3way(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick3way_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_quick_opt(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_heap(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_heap_opt(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int10k_builtin(b: &mut Bencher) {
-	let arr = thread_rng()
-		.gen_iter::<u32>()
-		.take(10000)
-		.collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(arr.sort_unstable())
-	});
-}
-
-#[bench]
-fn sort_int100_same_insertion(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(insertion_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_shell(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(shell_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_merge(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(merge_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_merge_opt(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(merge_sort_opt(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_almost_same_quick_opt(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	arr[99] = 100;
-	b.iter(|| black_box(quick_sort_opt(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_quick(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(quick_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_quick3way(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(quick3way_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_quick_opt(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(quick_sort_opt(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_heap(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(heap_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_heap_opt(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(heap_sort_opt(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_same_builtin(b: &mut Bencher) {
-	let mut arr = repeat(23u32).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(arr.sort_unstable()));
-}
-
-#[bench]
-fn sort_int100_sorted_insertion(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(insertion_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_shell(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(shell_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_merge(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(merge_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_merge_opt(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(merge_sort_opt(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_quick(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(quick_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_quick3way(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(quick3way_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_quick_opt(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(quick_sort_opt(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_heap(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(heap_sort(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_heap_opt(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(heap_sort_opt(&mut arr)));
-}
-
-#[bench]
-fn sort_int100_sorted_builtin(b: &mut Bencher) {
-	let mut arr = (0..100).take(100).collect::<Vec<_>>();
-	b.iter(|| black_box(arr.sort_unstable()));
-}
-
-#[bench]
-fn sort_int1k_reversed_base(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut _arr = arr.clone();
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_insertion(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(insertion_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_shell(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(shell_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_merge(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_merge_opt(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(merge_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_quick(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_quick3way(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick3way_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_quick_opt(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(quick_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_heap(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_heap_opt(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(heap_sort_opt(&mut arr))
-	});
-}
-
-#[bench]
-fn sort_int1k_reversed_builtin(b: &mut Bencher) {
-	let arr = (0..1000).rev().collect::<Vec<_>>();
-	b.iter(|| {
-		let mut arr = arr.clone();
-		black_box(arr.sort_unstable())
-	});
-}
+    ($group:ident, $input:ident, $name:literal, $sorter:ident, $size:expr) => {
+        $group.bench_with_input(
+            BenchmarkId::new(format!("{}", $size), $name),
+            &$input,
+            |b, i| {
+                b.iter(|| {
+                    let mut arr = i.clone();
+                    black_box($sorter(&mut arr))
+                });
+            },
+        )
+    };
+}
+
+fn sort_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sort");
+
+    for size in [7, 15, 100, 1000, 10000].iter() {
+        let input = thread_rng()
+            .gen_iter::<u32>()
+            .take(*size)
+            .collect::<Vec<_>>();
+
+        make_bench!(group, input, "insertion", insertion_sort, size);
+        make_bench!(group, input, "merge", merge_sort, size);
+        make_bench!(group, input, "merge_opt", merge_sort_opt, size);
+        make_bench!(group, input, "heap", heap_sort, size);
+        make_bench!(group, input, "heap_opt", heap_sort_opt, size);
+        make_bench!(group, input, "shell", shell_sort, size);
+        make_bench!(group, input, "quick", quick_sort, size);
+        make_bench!(group, input, "quick_3way", quick3way_sort, size);
+        make_bench!(group, input, "quick_opt", quick_sort_opt, size);
+        // make_bench!(group, input, "builtin", sort_unstable, size);
+        group.bench_with_input(
+            BenchmarkId::new(format!("{}", size), "builtin"),
+            &input,
+            |b, i| {
+                b.iter(|| {
+                    let mut arr = i.clone();
+                    black_box(arr.sort_unstable());
+                });
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn sort_same_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sort_same");
+    let input = iter::repeat(23u32).take(100).collect::<Vec<_>>();
+
+    make_bench!(group, input, "insertion", insertion_sort, 100);
+    make_bench!(group, input, "merge", merge_sort, 100);
+    make_bench!(group, input, "merge_opt", merge_sort_opt, 100);
+    make_bench!(group, input, "heap", heap_sort, 100);
+    make_bench!(group, input, "heap_opt", heap_sort_opt, 100);
+    make_bench!(group, input, "shell", shell_sort, 100);
+    make_bench!(group, input, "quick", quick_sort, 100);
+    make_bench!(group, input, "quick_3way", quick3way_sort, 100);
+    make_bench!(group, input, "quick_opt", quick_sort_opt, 100);
+    group.bench_with_input(BenchmarkId::new("100", "builtin"), &input, |b, i| {
+        b.iter(|| {
+            let mut arr = i.clone();
+            black_box(arr.sort_unstable());
+        });
+    });
+
+    group.finish();
+}
+
+fn sort_sorted_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sort_sorted");
+    let input = (0..100).take(100).collect::<Vec<_>>();
+
+    make_bench!(group, input, "insertion", insertion_sort, 100);
+    make_bench!(group, input, "merge", merge_sort, 100);
+    make_bench!(group, input, "merge_opt", merge_sort_opt, 100);
+    make_bench!(group, input, "heap", heap_sort, 100);
+    make_bench!(group, input, "heap_opt", heap_sort_opt, 100);
+    make_bench!(group, input, "shell", shell_sort, 100);
+    make_bench!(group, input, "quick", quick_sort, 100);
+    make_bench!(group, input, "quick_3way", quick3way_sort, 100);
+    make_bench!(group, input, "quick_opt", quick_sort_opt, 100);
+    group.bench_with_input(BenchmarkId::new("100", "builtin"), &input, |b, i| {
+        b.iter(|| {
+            let mut arr = i.clone();
+            black_box(arr.sort_unstable());
+        });
+    });
+
+    group.finish();
+}
+
+fn sort_reversed_benches(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sort_reversed");
+    let input = (0..1000).rev().collect::<Vec<_>>();
+
+    make_bench!(group, input, "insertion", insertion_sort, 1000);
+    make_bench!(group, input, "merge", merge_sort, 1000);
+    make_bench!(group, input, "merge_opt", merge_sort_opt, 1000);
+    make_bench!(group, input, "heap", heap_sort, 1000);
+    make_bench!(group, input, "heap_opt", heap_sort_opt, 1000);
+    make_bench!(group, input, "shell", shell_sort, 1000);
+    make_bench!(group, input, "quick", quick_sort, 1000);
+    make_bench!(group, input, "quick_3way", quick3way_sort, 1000);
+    make_bench!(group, input, "quick_opt", quick_sort_opt, 1000);
+    group.bench_with_input(BenchmarkId::new("1000", "builtin"), &input, |b, i| {
+        b.iter(|| {
+            let mut arr = i.clone();
+            black_box(arr.sort_unstable());
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group! {
+    name = benches;
+    config = Criterion::default().sample_size(10);
+    targets = sort_benches, sort_same_benches, sort_sorted_benches, sort_reversed_benches
+}
+criterion_main!(benches);
