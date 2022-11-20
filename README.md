@@ -9,7 +9,7 @@
   - [x] [String](./src/strings/README.md)
 
 ## Other
-  - [ ] [Dynamic Planning](./src/dp/README.md)
+  - [ ] [Dynamic Planning](./src/dp/)
 
 ## Test && Benchmark
  - `cargo run --release --bin union_find < data/largeUF.txt`

@@ -657,7 +657,7 @@ impl<'a, K: Ord, V> Iterator for Iter<'a, K, V> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // push left childen for visiting (travel to the min)
-        while let Some(ref l) = self.current {
+        while let Some(l) = self.current {
             self.stack.push(l);
             self.current = l.left.as_ref().map(|x| &**x);
         }
